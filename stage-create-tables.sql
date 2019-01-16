@@ -1,0 +1,17 @@
+START TRANSACTION;
+
+
+CREATE TABLE stage (
+    id     BIGSERIAL NOT NULL PRIMARY KEY,
+    t      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    jtype  TEXT NOT NULL,
+    jid    UUID NOT NULL,
+    j      JSONB NOT NULL
+);
+
+CREATE INDEX ON stage (t);
+CREATE INDEX ON stage (jtype, jid);
+
+
+COMMIT;
+
