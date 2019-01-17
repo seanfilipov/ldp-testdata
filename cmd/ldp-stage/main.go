@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/lib/pq"
+	"github.com/nassibnassar/goconfig/ini"
 )
 
 func main() {
@@ -82,12 +84,11 @@ func main() {
 		printError(err)
 		return
 	}
-	fmt.Printf("Updates committed to staging database\n")
+
+	log.Printf("COMMIT")
 }
 
 func stage(jtype string, filename string, tx *sql.Tx) error {
-
-	fmt.Printf("Reading %s from %s\n", jtype, filename)
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -114,6 +115,7 @@ func stage(jtype string, filename string, tx *sql.Tx) error {
 	}
 
 	// Read and load array elements.
+	count := 0
 	for dec.More() {
 
 		var i interface{}
@@ -134,6 +136,7 @@ func stage(jtype string, filename string, tx *sql.Tx) error {
 			return err
 		}
 
+		count++
 	}
 
 	_, err = stmt.Exec()
@@ -141,5 +144,43 @@ func stage(jtype string, filename string, tx *sql.Tx) error {
 		return err
 	}
 
+	log.Printf("%s %v: %s", jtype, count, filename)
+
 	return nil
+}
+
+func printError(err error) {
+	fmt.Fprintf(os.Stderr, "%s: %s\n", os.Args[0], err)
+}
+
+func readConfig() (*ini.Config, error) {
+	f := os.Getenv("LDP_CONFIG_FILE")
+	if f == "" {
+		return ini.NewConfig(), nil
+	}
+	c, err := ini.NewConfigFile(f)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"Error reading configuration file: %v", err)
+	}
+	return c, nil
+}
+
+func openDatabase(host, port, user, password, dbname string) (*sql.DB, error) {
+
+	connStr := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s "+
+			"sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		return nil, err
+	}
+
+	// Ping the database to test for connection errors.
+	err = db.Ping()
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
