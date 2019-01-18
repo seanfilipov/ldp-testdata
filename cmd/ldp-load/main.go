@@ -139,7 +139,7 @@ func loadAllStage(tx *dbtx) error {
 	}
 	defer rows.Close()
 
-	tmpcount := 0
+	var count int = 0
 	var sr stageRow
 	for rows.Next() {
 
@@ -159,18 +159,20 @@ func loadAllStage(tx *dbtx) error {
 			return err
 		}
 
-		tmpcount++
-		//if tmpcount > 1182172 {
-		//break
-		//}
-	}
-
-	if sr.Id > 0 {
-		err = deleteStageRows(tx, sr.Id)
-		if err != nil {
-			return err
+		count++
+		if count%100000 == 0 {
+			fmt.Println(count)
 		}
 	}
+
+	/*
+		if sr.Id > 0 {
+			err = deleteStageRows(tx, sr.Id)
+			if err != nil {
+				return err
+			}
+		}
+	*/
 
 	return nil
 }
