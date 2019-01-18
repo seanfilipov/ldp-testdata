@@ -4,89 +4,88 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
+	"github.com/folio-org/ldp/cmd/internal/ldputil"
 	_ "github.com/lib/pq"
-	"github.com/nassibnassar/goconfig/ini"
 )
 
 func main() {
-	config, err := readConfig()
+	config, err := ldputil.ReadConfig()
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 
-	stage1db, err := openDatabase(
+	stage1db, err := ldputil.OpenDatabase(
 		config.Get("stage-database", "host"),
 		config.Get("stage-database", "port"),
 		config.Get("stage-database", "user"),
 		config.Get("stage-database", "password"),
 		config.Get("stage-database", "dbname"))
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 	defer stage1db.Close()
 	stage1tx, err := stage1db.Begin()
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 	defer stage1tx.Rollback()
 	_, err = stage1tx.Exec(
 		"SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 
-	stage2db, err := openDatabase(
+	stage2db, err := ldputil.OpenDatabase(
 		config.Get("stage-database", "host"),
 		config.Get("stage-database", "port"),
 		config.Get("stage-database", "user"),
 		config.Get("stage-database", "password"),
 		config.Get("stage-database", "dbname"))
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 	defer stage2db.Close()
 	stage2tx, err := stage2db.Begin()
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 	defer stage2tx.Rollback()
 	_, err = stage2tx.Exec(
 		"SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 
-	ldpdb, err := openDatabase(
+	ldpdb, err := ldputil.OpenDatabase(
 		config.Get("ldp-database", "host"),
 		config.Get("ldp-database", "port"),
 		config.Get("ldp-database", "user"),
 		config.Get("ldp-database", "password"),
 		config.Get("ldp-database", "dbname"))
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 	defer ldpdb.Close()
 	ldptx, err := ldpdb.Begin()
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 	defer ldptx.Rollback()
 	_, err = ldptx.Exec("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 
@@ -99,25 +98,25 @@ func main() {
 
 	err = loadAllStage(tx)
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 
 	err = ldptx.Commit()
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 
 	err = stage1tx.Commit()
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 
 	err = stage2tx.Commit()
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 }
@@ -353,40 +352,4 @@ type DataUnit struct {
 	Jtype string
 	Jid   string
 	J     map[string]interface{}
-}
-
-func printError(err error) {
-	fmt.Fprintf(os.Stderr, "%s: %s\n", os.Args[0], err)
-}
-
-func readConfig() (*ini.Config, error) {
-	f := os.Getenv("LDP_CONFIG_FILE")
-	if f == "" {
-		return ini.NewConfig(), nil
-	}
-	c, err := ini.NewConfigFile(f)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"Error reading configuration file: %v", err)
-	}
-	return c, nil
-}
-
-func openDatabase(host, port, user, password, dbname string) (*sql.DB, error) {
-
-	connStr := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s "+
-			"sslmode=disable", host, port, user, password, dbname)
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		return nil, err
-	}
-
-	// Ping the database to test for connection errors.
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
 }

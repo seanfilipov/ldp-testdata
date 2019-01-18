@@ -10,7 +10,7 @@ CREATE TABLE stage (
 );
 
 CREATE INDEX ON stage (t);
--- CREATE INDEX ON stage (jtype, jid);
+CREATE INDEX ON stage (jtype, jid); -- Temporary
 
 
 CREATE TABLE restage (

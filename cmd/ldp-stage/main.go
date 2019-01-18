@@ -4,56 +4,55 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
+	"github.com/folio-org/ldp/cmd/internal/ldputil"
 	"github.com/lib/pq"
-	"github.com/nassibnassar/goconfig/ini"
 )
 
 func main() {
-	config, err := readConfig()
+	config, err := ldputil.ReadConfig()
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 
 	extractDir := config.Get("extract", "dir")
 
-	stagedb, err := openDatabase(
+	stagedb, err := ldputil.OpenDatabase(
 		config.Get("stage-database", "host"),
 		config.Get("stage-database", "port"),
 		config.Get("stage-database", "user"),
 		config.Get("stage-database", "password"),
 		config.Get("stage-database", "dbname"))
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 	defer stagedb.Close()
 
 	stagetx, err := stagedb.Begin()
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 	defer stagetx.Rollback()
 
 	_, err = stagetx.Exec("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 
 	err = stage("groups", extractDir+"/groups.json", stagetx)
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 
 	err = stage("users", extractDir+"/users.json", stagetx)
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
 
@@ -63,7 +62,7 @@ func main() {
 				x),
 			stagetx)
 		if err != nil {
-			printError(err)
+			ldputil.PrintError(err)
 			return
 		}
 	}
@@ -74,18 +73,16 @@ func main() {
 				x),
 			stagetx)
 		if err != nil {
-			printError(err)
+			ldputil.PrintError(err)
 			return
 		}
 	}
 
 	err = stagetx.Commit()
 	if err != nil {
-		printError(err)
+		ldputil.PrintError(err)
 		return
 	}
-
-	log.Printf("COMMIT")
 }
 
 func stage(jtype string, filename string, tx *sql.Tx) error {
@@ -144,43 +141,7 @@ func stage(jtype string, filename string, tx *sql.Tx) error {
 		return err
 	}
 
-	log.Printf("%s %v: %s", jtype, count, filename)
+	fmt.Printf("%s %v %s", jtype, count, filename)
 
 	return nil
-}
-
-func printError(err error) {
-	fmt.Fprintf(os.Stderr, "%s: %s\n", os.Args[0], err)
-}
-
-func readConfig() (*ini.Config, error) {
-	f := os.Getenv("LDP_CONFIG_FILE")
-	if f == "" {
-		return ini.NewConfig(), nil
-	}
-	c, err := ini.NewConfigFile(f)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"Error reading configuration file: %v", err)
-	}
-	return c, nil
-}
-
-func openDatabase(host, port, user, password, dbname string) (*sql.DB, error) {
-
-	connStr := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s "+
-			"sslmode=disable", host, port, user, password, dbname)
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		return nil, err
-	}
-
-	// Ping the database to test for connection errors.
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
 }
