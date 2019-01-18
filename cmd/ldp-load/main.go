@@ -140,7 +140,7 @@ func loadAllStage(tx *dbtx) error {
 	defer rows.Close()
 
 	var count int = 0
-	var sr stageRow
+	var sr DataUnit
 	for rows.Next() {
 
 		var js string
@@ -177,7 +177,7 @@ func loadAllStage(tx *dbtx) error {
 	return nil
 }
 
-func loadStageRow(sr *stageRow, tx *dbtx) error {
+func loadStageRow(sr *DataUnit, tx *dbtx) error {
 
 	if sr.Jtype == "users" {
 		err := loadUser(sr, tx)
@@ -203,7 +203,7 @@ func loadStageRow(sr *stageRow, tx *dbtx) error {
 	return nil
 }
 
-func loadTmpLocation(sr *stageRow, tx *dbtx) error {
+func loadTmpLocation(sr *DataUnit, tx *dbtx) error {
 
 	mockid, name := mockLocation(sr)
 
@@ -225,7 +225,7 @@ func loadTmpLocation(sr *stageRow, tx *dbtx) error {
 	return nil
 }
 
-func loadLoan(sr *stageRow, tx *dbtx) error {
+func loadLoan(sr *DataUnit, tx *dbtx) error {
 
 	loanId := sr.Jid
 	userId := sr.J["userId"].(string)
@@ -258,7 +258,7 @@ func loadLoan(sr *stageRow, tx *dbtx) error {
 	return nil
 }
 
-func mockLocation(sr *stageRow) (string, string) {
+func mockLocation(sr *DataUnit) (string, string) {
 	item := sr.J["item"]
 	location := item.(map[string]interface{})["location"]
 	name := location.(map[string]interface{})["name"].(string)
@@ -267,7 +267,7 @@ func mockLocation(sr *stageRow) (string, string) {
 	return mockid, name
 }
 
-func loadUser(sr *stageRow, tx *dbtx) error {
+func loadUser(sr *DataUnit, tx *dbtx) error {
 
 	groupJid := sr.J["patronGroup"].(string)
 
@@ -294,7 +294,7 @@ func loadUser(sr *stageRow, tx *dbtx) error {
 	return nil
 }
 
-func lookup(tx *dbtx, jtype string, jid string) (*stageRow, error) {
+func lookup(tx *dbtx, jtype string, jid string) (*DataUnit, error) {
 	rows, err := tx.stage2.Query(
 		"SELECT id, jtype, jid, j "+
 			"FROM stage "+
@@ -319,8 +319,8 @@ func lookup(tx *dbtx, jtype string, jid string) (*stageRow, error) {
 	return sr, nil
 }
 
-func scan(rows *sql.Rows) (*stageRow, error) {
-	var sr stageRow
+func scan(rows *sql.Rows) (*DataUnit, error) {
+	var sr DataUnit
 	var js string
 	err := rows.Scan(&sr.Id, &sr.Jtype, &sr.Jid, &js)
 	if err != nil {
@@ -346,7 +346,7 @@ func deleteStageRows(tx *dbtx, id int64) error {
 	return nil
 }
 
-type stageRow struct {
+type DataUnit struct {
 	Id    int64
 	Jtype string
 	Jid   string
