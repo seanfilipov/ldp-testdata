@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/nassibnassar/goconfig/ini"
@@ -131,7 +132,7 @@ type dbtx struct {
 func loadAllStage(tx *dbtx) error {
 
 	rows, err := tx.stage1.Query(
-		"SELECT id, jtype, jid, j " +
+		"SELECT id, t, jtype, jid, j " +
 			"FROM stage " +
 			"ORDER BY id")
 	if err != nil {
@@ -140,21 +141,21 @@ func loadAllStage(tx *dbtx) error {
 	defer rows.Close()
 
 	var count int = 0
-	var sr DataUnit
+	var du DataUnit
 	for rows.Next() {
 
 		var js string
-		err := rows.Scan(&sr.Id, &sr.Jtype, &sr.Jid, &js)
+		err := rows.Scan(&du.Id, &du.T, &du.Jtype, &du.Jid, &js)
 		if err != nil {
 			return err
 		}
 
-		err = json.Unmarshal([]byte(js), &sr.J)
+		err = json.Unmarshal([]byte(js), &du.J)
 		if err != nil {
 			return err
 		}
 
-		err = loadStageRow(&sr, tx)
+		err = loadStageRow(&du, tx)
 		if err != nil {
 			return err
 		}
@@ -166,8 +167,8 @@ func loadAllStage(tx *dbtx) error {
 	}
 
 	/*
-		if sr.Id > 0 {
-			err = deleteStageRows(tx, sr.Id)
+		if du.Id > 0 {
+			err = deleteStageRows(tx, du.Id)
 			if err != nil {
 				return err
 			}
@@ -177,24 +178,24 @@ func loadAllStage(tx *dbtx) error {
 	return nil
 }
 
-func loadStageRow(sr *DataUnit, tx *dbtx) error {
+func loadStageRow(du *DataUnit, tx *dbtx) error {
 
-	if sr.Jtype == "users" {
-		err := loadUser(sr, tx)
+	if du.Jtype == "users" {
+		err := loadUser(du, tx)
 		if err != nil {
 			return err
 		}
 	}
 
-	if sr.Jtype == "tmp_locations" {
-		err := loadTmpLocation(sr, tx)
+	if du.Jtype == "tmp_locations" {
+		err := loadTmpLocation(du, tx)
 		if err != nil {
 			return err
 		}
 	}
 
-	if sr.Jtype == "loans" {
-		err := loadLoan(sr, tx)
+	if du.Jtype == "loans" {
+		err := loadLoan(du, tx)
 		if err != nil {
 			return err
 		}
@@ -203,9 +204,9 @@ func loadStageRow(sr *DataUnit, tx *dbtx) error {
 	return nil
 }
 
-func loadTmpLocation(sr *DataUnit, tx *dbtx) error {
+func loadTmpLocation(du *DataUnit, tx *dbtx) error {
 
-	mockid, name := mockLocation(sr)
+	mockid, name := mockLocation(du)
 
 	if tx.locset[mockid] == "" {
 		_, err := tx.ldp.Exec(
@@ -225,22 +226,22 @@ func loadTmpLocation(sr *DataUnit, tx *dbtx) error {
 	return nil
 }
 
-func loadLoan(sr *DataUnit, tx *dbtx) error {
+func loadLoan(du *DataUnit, tx *dbtx) error {
 
-	loanId := sr.Jid
-	userId := sr.J["userId"].(string)
-	loanDate := sr.J["loanDate"].(string)
+	loanId := du.Jid
+	userId := du.J["userId"].(string)
+	loanDate := du.J["loanDate"].(string)
 
-	locsr, err := lookup(tx, "tmp_locations", loanId)
+	locdu, err := lookup(tx, "tmp_locations", loanId)
 	if err != nil {
 		return err
 	}
-	if locsr == nil {
+	if locdu == nil {
 		return fmt.Errorf("Loan %v is missing location data",
 			loanId)
 	}
 
-	mockid, _ := mockLocation(locsr)
+	mockid, _ := mockLocation(locdu)
 
 	_, err = tx.ldp.Exec(
 		"INSERT INTO loans (loan_id, user_id, location_id, "+
@@ -258,8 +259,8 @@ func loadLoan(sr *DataUnit, tx *dbtx) error {
 	return nil
 }
 
-func mockLocation(sr *DataUnit) (string, string) {
-	item := sr.J["item"]
+func mockLocation(du *DataUnit) (string, string) {
+	item := du.J["item"]
 	location := item.(map[string]interface{})["location"]
 	name := location.(map[string]interface{})["name"].(string)
 	mockid := "id-" +
@@ -267,9 +268,9 @@ func mockLocation(sr *DataUnit) (string, string) {
 	return mockid, name
 }
 
-func loadUser(sr *DataUnit, tx *dbtx) error {
+func loadUser(du *DataUnit, tx *dbtx) error {
 
-	groupJid := sr.J["patronGroup"].(string)
+	groupJid := du.J["patronGroup"].(string)
 
 	group, err := lookup(tx, "groups", groupJid)
 	if err != nil {
@@ -277,7 +278,7 @@ func loadUser(sr *DataUnit, tx *dbtx) error {
 	}
 	if group == nil {
 		return fmt.Errorf("User %v references unknown group %v",
-			sr.Jid, groupJid)
+			du.Jid, groupJid)
 	}
 
 	_, err = tx.ldp.Exec(
@@ -285,7 +286,7 @@ func loadUser(sr *DataUnit, tx *dbtx) error {
 			"VALUES ($1, $2) "+
 			"ON CONFLICT (user_id) DO "+
 			"UPDATE SET group_name = EXCLUDED.group_name",
-		sr.Jid,
+		du.Jid,
 		group.J["group"].(string))
 	if err != nil {
 		return err
@@ -296,7 +297,7 @@ func loadUser(sr *DataUnit, tx *dbtx) error {
 
 func lookup(tx *dbtx, jtype string, jid string) (*DataUnit, error) {
 	rows, err := tx.stage2.Query(
-		"SELECT id, jtype, jid, j "+
+		"SELECT id, t, jtype, jid, j "+
 			"FROM stage "+
 			"WHERE jtype = $1 AND jid = $2 "+
 			"ORDER BY id "+
@@ -311,28 +312,28 @@ func lookup(tx *dbtx, jtype string, jid string) (*DataUnit, error) {
 		return nil, nil
 	}
 
-	sr, err := scan(rows)
+	du, err := scan(rows)
 	if err != nil {
 		return nil, err
 	}
 
-	return sr, nil
+	return du, nil
 }
 
 func scan(rows *sql.Rows) (*DataUnit, error) {
-	var sr DataUnit
+	var du DataUnit
 	var js string
-	err := rows.Scan(&sr.Id, &sr.Jtype, &sr.Jid, &js)
+	err := rows.Scan(&du.Id, &du.T, &du.Jtype, &du.Jid, &js)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal([]byte(js), &sr.J)
+	err = json.Unmarshal([]byte(js), &du.J)
 	if err != nil {
 		return nil, err
 	}
 
-	return &sr, nil
+	return &du, nil
 }
 
 func deleteStageRows(tx *dbtx, id int64) error {
@@ -348,6 +349,7 @@ func deleteStageRows(tx *dbtx, id int64) error {
 
 type DataUnit struct {
 	Id    int64
+	T     time.Time
 	Jtype string
 	Jid   string
 	J     map[string]interface{}
