@@ -3,12 +3,45 @@ START TRANSACTION;
 
 CREATE TABLE stage (
     id      BIGSERIAL NOT NULL PRIMARY KEY,
+    t       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     jtype   TEXT NOT NULL,
     jid     UUID NOT NULL,
-    j       JSONB NOT NULL,
+    j       JSONB NOT NULL
 );
 
-CREATE INDEX ON stage (jtype, jid);
+CREATE INDEX ON stage (t);
+-- CREATE INDEX ON stage (jtype, jid);
+
+
+CREATE TABLE restage (
+    id      BIGSERIAL NOT NULL PRIMARY KEY,
+    t       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    jtype   TEXT NOT NULL,
+    jid     UUID NOT NULL,
+    j       JSONB NOT NULL
+);
+
+
+CREATE TABLE loans (
+    id      BIGSERIAL NOT NULL PRIMARY KEY,
+    jid     UUID NOT NULL UNIQUE,
+    j       JSONB NOT NULL,
+    t       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE users (
+    id      BIGSERIAL NOT NULL PRIMARY KEY,
+    jid     UUID NOT NULL UNIQUE,
+    j       JSONB NOT NULL,
+    t       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE tmp_locations (
+    loan_id        UUID NOT NULL PRIMARY KEY,
+    location_name  TEXT NOT NULL
+);
 
 
 COMMIT;
