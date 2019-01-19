@@ -1,44 +1,41 @@
 START TRANSACTION;
 
 
+CREATE SCHEMA denorm;
+CREATE SCHEMA dim;
+CREATE SCHEMA tmp;
+
+
+CREATE TYPE ldutype AS ENUM (
+    'groups',
+    'loans',
+    'users',
+    'tmp_loans_locations'
+);
+
+
 CREATE TABLE stage (
-    id      BIGSERIAL NOT NULL PRIMARY KEY,
-    t       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    jtype   TEXT NOT NULL,
-    jid     UUID NOT NULL,
-    j       JSONB NOT NULL
-);
-
-CREATE INDEX ON stage (t);
-CREATE INDEX ON stage (jtype, jid); -- Temporary
-
-
-CREATE TABLE restage (
-    id      BIGSERIAL NOT NULL PRIMARY KEY,
-    t       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    jtype   TEXT NOT NULL,
-    jid     UUID NOT NULL,
-    j       JSONB NOT NULL
+    id     BIGSERIAL NOT NULL PRIMARY KEY,
+    jtype  ldutype NOT NULL,
+    jid    UUID NOT NULL,
+    j      JSONB NOT NULL
 );
 
 
-CREATE TABLE loans (
-    id      BIGSERIAL NOT NULL PRIMARY KEY,
-    jid     UUID NOT NULL UNIQUE,
-    j       JSONB NOT NULL,
-    t       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE denorm.groups (
+    id           UUID NOT NULL PRIMARY KEY,
+    name         TEXT NOT NULL,
+    description  TEXT NOT NULL
 );
 
 
-CREATE TABLE users (
-    id      BIGSERIAL NOT NULL PRIMARY KEY,
-    jid     UUID NOT NULL UNIQUE,
-    j       JSONB NOT NULL,
-    t       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE dim.users (
+    id        UUID NOT NULL PRIMARY KEY,
+    group_id  UUID NOT NULL
 );
 
 
-CREATE TABLE tmp_locations (
+CREATE TABLE tmp.loans_locations (
     loan_id        UUID NOT NULL PRIMARY KEY,
     location_name  TEXT NOT NULL
 );

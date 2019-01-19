@@ -57,7 +57,7 @@ func main() {
 	}
 
 	for x := 1; x <= 20; x++ {
-		err = stage("tmp_locations",
+		err = stage("tmp_loans_locations",
 			extractDir+fmt.Sprintf("/circulation.loans.json.%v",
 				x),
 			stagetx)
@@ -141,7 +141,7 @@ func stage(jtype string, filename string, tx *sql.Tx) error {
 		return err
 	}
 
-	fmt.Printf("%s %v %s", jtype, count, filename)
+	fmt.Printf("%s %v %s\n", jtype, count, filename)
 
 	return nil
 }

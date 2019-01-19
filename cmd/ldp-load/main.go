@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/folio-org/ldp/cmd/internal/ldputil"
 	_ "github.com/lib/pq"
 )
+
+const missingDataString string = "NOT AVAILABLE"
 
 func main() {
 	config, err := ldputil.ReadConfig()
@@ -102,6 +103,9 @@ func main() {
 		return
 	}
 
+	// TODO Loop through all dim.* tables to see if any missing data
+	// are now available, and if so, update the records.
+
 	err = ldptx.Commit()
 	if err != nil {
 		ldputil.PrintError(err)
@@ -131,7 +135,7 @@ type dbtx struct {
 func loadAllStage(tx *dbtx) error {
 
 	rows, err := tx.stage1.Query(
-		"SELECT id, t, jtype, jid, j " +
+		"SELECT id, jtype, jid, j " +
 			"FROM stage " +
 			"ORDER BY id")
 	if err != nil {
@@ -140,11 +144,13 @@ func loadAllStage(tx *dbtx) error {
 	defer rows.Close()
 
 	var count int = 0
-	var du DataUnit
+	var maxId int64 = 0
 	for rows.Next() {
 
+		var du DataUnit
+
 		var js string
-		err := rows.Scan(&du.Id, &du.T, &du.Jtype, &du.Jid, &js)
+		err := rows.Scan(&du.Id, &du.Jtype, &du.Jid, &js)
 		if err != nil {
 			return err
 		}
@@ -154,58 +160,123 @@ func loadAllStage(tx *dbtx) error {
 			return err
 		}
 
-		err = loadStageRow(&du, tx)
+		err = loadDataUnit(&du, tx)
 		if err != nil {
 			return err
 		}
 
+		maxId = du.Id
 		count++
 		if count%100000 == 0 {
 			fmt.Println(count)
 		}
 	}
 
-	/*
-		if du.Id > 0 {
-			err = deleteStageRows(tx, du.Id)
+	if maxId > 0 {
+		/*
+			err = deleteFromStage(tx, maxId)
 			if err != nil {
 				return err
 			}
-		}
-	*/
+		*/
+	}
 
 	return nil
 }
 
-func loadStageRow(du *DataUnit, tx *dbtx) error {
+func loadDataUnit(du *DataUnit, tx *dbtx) error {
 
-	if du.Jtype == "users" {
+	switch du.Jtype {
+	case "groups":
+		err := storeGroup(du, tx)
+		if err != nil {
+			return err
+		}
+	case "users":
 		err := loadUser(du, tx)
 		if err != nil {
 			return err
 		}
-	}
-
-	if du.Jtype == "tmp_locations" {
-		err := loadTmpLocation(du, tx)
-		if err != nil {
-			return err
-		}
-	}
-
-	if du.Jtype == "loans" {
-		err := loadLoan(du, tx)
-		if err != nil {
-			return err
-		}
+		/*
+			case "loans":
+				err := loadLoan(du, tx)
+				if err != nil {
+					return err
+				}
+			case "tmp_loans_locations":
+				err := updateMirror(du, tx)
+				if err != nil {
+					return err
+				}
+				err = loadTmpLocation(du, tx)
+				if err != nil {
+					return err
+				}
+			default:
+				return fmt.Errorf("Unknown data unit type: %v", du.Jtype)
+		*/
 	}
 
 	return nil
 }
 
+func storeGroup(du *DataUnit, tx *dbtx) error {
+
+	//j, err := json.marshal(du.j)
+	//if err != nil {
+	//fmt.println("error:", err)
+	//}
+
+	id := du.J["id"].(string)
+	name := du.J["group"].(string)
+	description := du.J["desc"].(string)
+
+	_, err := tx.stage2.Exec(
+		"INSERT INTO denorm.groups AS g (id, name, description) "+
+			"VALUES ($1, $2, $3) "+
+			"ON CONFLICT (id) DO "+
+			"UPDATE SET name = EXCLUDED.name, "+
+			"description = EXCLUDED.description "+
+			"WHERE g.name <> EXCLUDED.name OR "+
+			"g.description <> EXCLUDED.description",
+		id, name, description)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/*
+func updateMirror(du *DataUnit, tx *dbtx) error {
+
+	table, err := tablename(du.jtype)
+	if err != nil {
+		return err
+	}
+
+	j, err := json.marshal(du.j)
+	if err != nil {
+		fmt.println("error:", err)
+	}
+
+	_, err = tx.stage2.exec(
+		"insert into "+table+" (jid, j) "+
+			"values ($1, $2) "+
+			"on conflict (jid) do "+
+			"update set j = excluded.j",
+		du.jid, string(j))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+*/
+
 func loadTmpLocation(du *DataUnit, tx *dbtx) error {
 
-	mockid, name := mockLocation(du)
+	mockid, name := mockLocation(du.J)
 
 	if tx.locset[mockid] == "" {
 		_, err := tx.ldp.Exec(
@@ -231,16 +302,16 @@ func loadLoan(du *DataUnit, tx *dbtx) error {
 	userId := du.J["userId"].(string)
 	loanDate := du.J["loanDate"].(string)
 
-	locdu, err := lookup(tx, "tmp_locations", loanId)
+	loanlocJ, err := lookupMirror(tx, "tmp_loans_locations", loanId)
 	if err != nil {
 		return err
 	}
-	if locdu == nil {
+	if loanlocJ == nil {
 		return fmt.Errorf("Loan %v is missing location data",
 			loanId)
 	}
 
-	mockid, _ := mockLocation(locdu)
+	mockid, _ := mockLocation(loanlocJ)
 
 	_, err = tx.ldp.Exec(
 		"INSERT INTO loans (loan_id, user_id, location_id, "+
@@ -258,8 +329,8 @@ func loadLoan(du *DataUnit, tx *dbtx) error {
 	return nil
 }
 
-func mockLocation(du *DataUnit) (string, string) {
-	item := du.J["item"]
+func mockLocation(j map[string]interface{}) (string, string) {
+	item := j["item"]
 	location := item.(map[string]interface{})["location"]
 	name := location.(map[string]interface{})["name"].(string)
 	mockid := "id-" +
@@ -269,24 +340,40 @@ func mockLocation(du *DataUnit) (string, string) {
 
 func loadUser(du *DataUnit, tx *dbtx) error {
 
+	userName := du.J["username"].(string)
+	active := du.J["active"].(string)
+
 	groupJid := du.J["patronGroup"].(string)
 
-	group, err := lookup(tx, "groups", groupJid)
+	//groupJ, err := lookupMirror(tx, "groups", groupJid)
+	groupName, groupDesc, found, err := recallGroup(tx, groupJid)
 	if err != nil {
 		return err
 	}
-	if group == nil {
-		return fmt.Errorf("User %v references unknown group %v",
-			du.Jid, groupJid)
+	if !found {
+		// TODO Store a record of the incomplete user and
+		// unknown group ID in dim.users.
+		//err := storeUser(...)
+		groupName = missingDataString
+		groupDesc = missingDataString
 	}
+	_ = groupDesc
 
 	_, err = tx.ldp.Exec(
-		"INSERT INTO users (user_id, group_name) "+
-			"VALUES ($1, $2) "+
+		"INSERT INTO users AS u "+
+			"(user_id, user_name, active, group_name) "+
+			"VALUES ($1, $2, $3, $4) "+
 			"ON CONFLICT (user_id) DO "+
-			"UPDATE SET group_name = EXCLUDED.group_name",
+			"UPDATE SET user_name = EXCLUDED.user_name, "+
+			"active = EXCLUDED.active, "+
+			"group_name = EXCLUDED.group_name "+
+			"WHERE u.user_name <> EXCLUDED.user_name OR "+
+			"u.active <> EXCLUDED.active OR "+
+			"u.group_name <> EXCLUDED.group_name",
 		du.Jid,
-		group.J["group"].(string))
+		userName,
+		active,
+		groupName)
 	if err != nil {
 		return err
 	}
@@ -294,14 +381,45 @@ func loadUser(du *DataUnit, tx *dbtx) error {
 	return nil
 }
 
-func lookup(tx *dbtx, jtype string, jid string) (*DataUnit, error) {
+func recallGroup(tx *dbtx, id string) (string, string, bool, error) {
+
 	rows, err := tx.stage2.Query(
-		"SELECT id, t, jtype, jid, j "+
-			"FROM stage "+
-			"WHERE jtype = $1 AND jid = $2 "+
-			"ORDER BY id "+
-			"LIMIT 1",
-		jtype, jid)
+		"SELECT name, description "+
+			"FROM denorm.groups "+
+			"WHERE id = $1",
+		id)
+	if err != nil {
+		return "", "", false, err
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return "", "", false, nil
+	}
+
+	var name string
+	var description string
+	err = rows.Scan(&name, &description)
+	if err != nil {
+		return "", "", false, err
+	}
+
+	return name, description, true, nil
+}
+
+func lookupMirror(tx *dbtx, jtype string, jid string) (map[string]interface{},
+	error) {
+
+	table, err := tableName(jtype)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.stage2.Query(
+		"SELECT j "+
+			"FROM "+table+" "+
+			"WHERE jid = $1",
+		jid)
 	if err != nil {
 		return nil, err
 	}
@@ -311,31 +429,22 @@ func lookup(tx *dbtx, jtype string, jid string) (*DataUnit, error) {
 		return nil, nil
 	}
 
-	du, err := scan(rows)
-	if err != nil {
-		return nil, err
-	}
-
-	return du, nil
-}
-
-func scan(rows *sql.Rows) (*DataUnit, error) {
-	var du DataUnit
+	var j map[string]interface{}
 	var js string
-	err := rows.Scan(&du.Id, &du.T, &du.Jtype, &du.Jid, &js)
+	err = rows.Scan(&js)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal([]byte(js), &du.J)
+	err = json.Unmarshal([]byte(js), &j)
 	if err != nil {
 		return nil, err
 	}
 
-	return &du, nil
+	return j, nil
 }
 
-func deleteStageRows(tx *dbtx, id int64) error {
+func deleteFromStage(tx *dbtx, id int64) error {
 
 	_, err := tx.stage1.Exec(
 		"DELETE FROM stage WHERE id <= $1", id)
@@ -346,9 +455,20 @@ func deleteStageRows(tx *dbtx, id int64) error {
 	return nil
 }
 
+func tableName(jtype string) (string, error) {
+	switch jtype {
+	case "groups",
+		//"loans",
+		//"users",
+		"tmp_loans_locations":
+		return jtype, nil
+	default:
+		return "", fmt.Errorf("Data unit type \"%s\" is unknown", jtype)
+	}
+}
+
 type DataUnit struct {
 	Id    int64
-	T     time.Time
 	Jtype string
 	Jid   string
 	J     map[string]interface{}

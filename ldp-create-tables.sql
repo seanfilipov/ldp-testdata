@@ -3,6 +3,8 @@ START TRANSACTION;
 
 CREATE TABLE users (
     user_id     UUID NOT NULL,
+    user_name   TEXT NOT NULL,
+    active      BOOLEAN NOT NULL,
     group_name  TEXT NOT NULL
 );
 
