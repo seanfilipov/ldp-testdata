@@ -106,6 +106,12 @@ func main() {
 	// TODO Loop through all dim.* tables to see if any missing data
 	// are now available, and if so, update the records.
 
+	err = updateMissingData(tx)
+	if err != nil {
+		ldputil.PrintError(err)
+		return
+	}
+
 	err = ldptx.Commit()
 	if err != nil {
 		ldputil.PrintError(err)
@@ -130,6 +136,66 @@ type dbtx struct {
 	stage2 *sql.Tx           // Secondary lookups
 	ldp    *sql.Tx           // Target database
 	locset map[string]string // Temporary memory of locations
+}
+
+func updateMissingData(tx *dbtx) error {
+	err := updateMissingInUsers(tx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func updateMissingInUsers(tx *dbtx) error {
+
+	rows, err := tx.stage1.Query(
+		"SELECT id, group_id " +
+			"FROM dim.users")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	/////////////////////////////////
+	// TODO one table for just users - groups?
+
+	for rows.Next() {
+
+		var du DataUnit
+
+		var js string
+		err := rows.Scan(&du.Id, &du.Jtype, &du.Jid, &js)
+		if err != nil {
+			return err
+		}
+
+		err = json.Unmarshal([]byte(js), &du.J)
+		if err != nil {
+			return err
+		}
+
+		err = loadDataUnit(&du, tx)
+		if err != nil {
+			return err
+		}
+
+		maxId = du.Id
+		count++
+		if count%100000 == 0 {
+			fmt.Println(count)
+		}
+	}
+
+	if maxId > 0 {
+		/*
+			err = deleteFromStage(tx, maxId)
+			if err != nil {
+				return err
+			}
+		*/
+	}
+
+	return nil
 }
 
 func loadAllStage(tx *dbtx) error {
@@ -215,33 +281,6 @@ func loadDataUnit(du *DataUnit, tx *dbtx) error {
 			default:
 				return fmt.Errorf("Unknown data unit type: %v", du.Jtype)
 		*/
-	}
-
-	return nil
-}
-
-func storeGroup(du *DataUnit, tx *dbtx) error {
-
-	//j, err := json.marshal(du.j)
-	//if err != nil {
-	//fmt.println("error:", err)
-	//}
-
-	id := du.J["id"].(string)
-	name := du.J["group"].(string)
-	description := du.J["desc"].(string)
-
-	_, err := tx.stage2.Exec(
-		"INSERT INTO denorm.groups AS g (id, name, description) "+
-			"VALUES ($1, $2, $3) "+
-			"ON CONFLICT (id) DO "+
-			"UPDATE SET name = EXCLUDED.name, "+
-			"description = EXCLUDED.description "+
-			"WHERE g.name <> EXCLUDED.name OR "+
-			"g.description <> EXCLUDED.description",
-		id, name, description)
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -351,9 +390,10 @@ func loadUser(du *DataUnit, tx *dbtx) error {
 		return err
 	}
 	if !found {
-		// TODO Store a record of the incomplete user and
-		// unknown group ID in dim.users.
-		//err := storeUser(...)
+		err := storeUser(du, tx)
+		if err != nil {
+			return err
+		}
 		groupName = missingDataString
 		groupDesc = missingDataString
 	}
@@ -374,6 +414,49 @@ func loadUser(du *DataUnit, tx *dbtx) error {
 		userName,
 		active,
 		groupName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func storeUser(du *DataUnit, tx *dbtx) error {
+
+	id := du.J["id"].(string)
+	groupId := du.J["patronGroup"].(string)
+
+	_, err := tx.stage2.Exec(
+		"INSERT INTO dim.users AS u "+
+			"(id, group_id) "+
+			"VALUES ($1, $2) "+
+			"ON CONFLICT (id) DO "+
+			"UPDATE SET group_id = EXCLUDED.group_id "+
+			"WHERE u.group_id <> EXCLUDED.group_id",
+		id, groupId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func storeGroup(du *DataUnit, tx *dbtx) error {
+
+	id := du.J["id"].(string)
+	name := du.J["group"].(string)
+	description := du.J["desc"].(string)
+
+	_, err := tx.stage2.Exec(
+		"INSERT INTO denorm.groups AS g "+
+			"(id, name, description) "+
+			"VALUES ($1, $2, $3) "+
+			"ON CONFLICT (id) DO "+
+			"UPDATE SET name = EXCLUDED.name, "+
+			"description = EXCLUDED.description "+
+			"WHERE g.name <> EXCLUDED.name OR "+
+			"g.description <> EXCLUDED.description",
+		id, name, description)
 	if err != nil {
 		return err
 	}
