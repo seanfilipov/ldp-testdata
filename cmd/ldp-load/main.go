@@ -4,13 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strings"
+	"os"
+	"time"
 
 	"github.com/folio-org/ldp/cmd/internal/ldputil"
 	_ "github.com/lib/pq"
 )
-
-const missingDataString string = "NOT AVAILABLE"
 
 func main() {
 	config, err := ldputil.ReadConfig()
@@ -19,55 +18,9 @@ func main() {
 		return
 	}
 
-	stage1db, err := ldputil.OpenDatabase(
-		config.Get("stage-database", "host"),
-		config.Get("stage-database", "port"),
-		config.Get("stage-database", "user"),
-		config.Get("stage-database", "password"),
-		config.Get("stage-database", "dbname"))
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-	defer stage1db.Close()
-	stage1tx, err := stage1db.Begin()
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-	defer stage1tx.Rollback()
-	_, err = stage1tx.Exec(
-		"SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
+	extractDir := config.Get("extract", "dir")
 
-	stage2db, err := ldputil.OpenDatabase(
-		config.Get("stage-database", "host"),
-		config.Get("stage-database", "port"),
-		config.Get("stage-database", "user"),
-		config.Get("stage-database", "password"),
-		config.Get("stage-database", "dbname"))
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-	defer stage2db.Close()
-	stage2tx, err := stage2db.Begin()
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-	defer stage2tx.Rollback()
-	_, err = stage2tx.Exec(
-		"SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-
-	ldpdb, err := ldputil.OpenDatabase(
+	db, err := ldputil.OpenDatabase(
 		config.Get("ldp-database", "host"),
 		config.Get("ldp-database", "port"),
 		config.Get("ldp-database", "user"),
@@ -77,363 +30,145 @@ func main() {
 		ldputil.PrintError(err)
 		return
 	}
-	defer ldpdb.Close()
-	ldptx, err := ldpdb.Begin()
+	defer db.Close()
+
+	tx, err := db.Begin()
 	if err != nil {
 		ldputil.PrintError(err)
 		return
 	}
-	defer ldptx.Rollback()
-	_, err = ldptx.Exec("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
+	defer tx.Rollback()
 
-	tx := &dbtx{
-		stage1: stage1tx,
-		stage2: stage2tx,
-		ldp:    ldptx,
-		locset: make(map[string]string),
-	}
-
-	err = loadAllStage(tx)
+	_, err = tx.Exec("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
 	if err != nil {
 		ldputil.PrintError(err)
 		return
 	}
 
-	// TODO Loop through all dim.* tables to see if any missing data
-	// are now available, and if so, update the records.
-
-	err = updateMissingData(tx)
+	err = loadAll("groups", extractDir+"/groups.json", tx)
 	if err != nil {
 		ldputil.PrintError(err)
 		return
 	}
 
-	err = ldptx.Commit()
+	err = loadAll("users", extractDir+"/users.json", tx)
 	if err != nil {
 		ldputil.PrintError(err)
 		return
 	}
 
-	err = stage1tx.Commit()
-	if err != nil {
-		ldputil.PrintError(err)
-		return
+	for x := 1; x <= 20; x++ {
+		err = loadAll("tmp_loans_locations",
+			extractDir+fmt.Sprintf("/circulation.loans.json.%v",
+				x),
+			tx)
+		if err != nil {
+			ldputil.PrintError(err)
+			return
+		}
 	}
 
-	err = stage2tx.Commit()
+	for x := 1; x <= 20; x++ {
+		err = loadAll("loans",
+			extractDir+fmt.Sprintf("/loan-storage.loans.json.%v",
+				x),
+			tx)
+		if err != nil {
+			ldputil.PrintError(err)
+			return
+		}
+	}
+
+	err = tx.Commit()
 	if err != nil {
 		ldputil.PrintError(err)
 		return
 	}
 }
 
-type dbtx struct {
-	stage1 *sql.Tx           // Outer select loop
-	stage2 *sql.Tx           // Secondary lookups
-	ldp    *sql.Tx           // Target database
-	locset map[string]string // Temporary memory of locations
-}
+func loadAll(jtype string, filename string, tx *sql.Tx) error {
 
-func updateMissingData(tx *dbtx) error {
-	err := updateMissingInUsers(tx)
+	file, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
-	return nil
-}
+	defer file.Close()
 
-func updateMissingInUsers(tx *dbtx) error {
+	dec := json.NewDecoder(file)
 
-	rows, err := tx.stage1.Query(
-		"SELECT id, group_id " +
-			"FROM dim.users")
-	if err != nil {
-		return err
+	// Skip past first tokens.
+	for x := 0; x < 3; x++ {
+		_, err := dec.Token()
+		if err != nil {
+			return err
+		}
 	}
-	defer rows.Close()
 
-	/////////////////////////////////
-	// TODO one table for just users - groups?
+	// Read and load array elements.
+	count := 0
+	for dec.More() {
 
-	for rows.Next() {
-
-		var du DataUnit
-
-		var js string
-		err := rows.Scan(&du.Id, &du.Jtype, &du.Jid, &js)
+		var i interface{}
+		err := dec.Decode(&i)
 		if err != nil {
 			return err
 		}
 
-		err = json.Unmarshal([]byte(js), &du.J)
+		err = load(tx, jtype, i.(map[string]interface{}))
 		if err != nil {
 			return err
 		}
 
-		err = loadDataUnit(&du, tx)
-		if err != nil {
-			return err
-		}
-
-		maxId = du.Id
 		count++
-		if count%100000 == 0 {
-			fmt.Println(count)
-		}
 	}
 
-	if maxId > 0 {
-		/*
-			err = deleteFromStage(tx, maxId)
-			if err != nil {
-				return err
-			}
-		*/
-	}
+	fmt.Printf("%s %v %s\n", jtype, count, filename)
 
 	return nil
 }
 
-func loadAllStage(tx *dbtx) error {
-
-	rows, err := tx.stage1.Query(
-		"SELECT id, jtype, jid, j " +
-			"FROM stage " +
-			"ORDER BY id")
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	var count int = 0
-	var maxId int64 = 0
-	for rows.Next() {
-
-		var du DataUnit
-
-		var js string
-		err := rows.Scan(&du.Id, &du.Jtype, &du.Jid, &js)
-		if err != nil {
-			return err
-		}
-
-		err = json.Unmarshal([]byte(js), &du.J)
-		if err != nil {
-			return err
-		}
-
-		err = loadDataUnit(&du, tx)
-		if err != nil {
-			return err
-		}
-
-		maxId = du.Id
-		count++
-		if count%100000 == 0 {
-			fmt.Println(count)
-		}
-	}
-
-	if maxId > 0 {
-		/*
-			err = deleteFromStage(tx, maxId)
-			if err != nil {
-				return err
-			}
-		*/
-	}
-
-	return nil
-}
-
-func loadDataUnit(du *DataUnit, tx *dbtx) error {
-
-	switch du.Jtype {
+func load(tx *sql.Tx, jtype string, j map[string]interface{}) error {
+	switch jtype {
 	case "groups":
-		err := storeGroup(du, tx)
+		err := loadGroup(tx, jtype, j)
 		if err != nil {
 			return err
 		}
 	case "users":
-		err := loadUser(du, tx)
+		err := loadUser(tx, jtype, j)
 		if err != nil {
 			return err
 		}
-		/*
-			case "loans":
-				err := loadLoan(du, tx)
-				if err != nil {
-					return err
-				}
-			case "tmp_loans_locations":
-				err := updateMirror(du, tx)
-				if err != nil {
-					return err
-				}
-				err = loadTmpLocation(du, tx)
-				if err != nil {
-					return err
-				}
-			default:
-				return fmt.Errorf("Unknown data unit type: %v", du.Jtype)
-		*/
-	}
-
-	return nil
-}
-
-/*
-func updateMirror(du *DataUnit, tx *dbtx) error {
-
-	table, err := tablename(du.jtype)
-	if err != nil {
-		return err
-	}
-
-	j, err := json.marshal(du.j)
-	if err != nil {
-		fmt.println("error:", err)
-	}
-
-	_, err = tx.stage2.exec(
-		"insert into "+table+" (jid, j) "+
-			"values ($1, $2) "+
-			"on conflict (jid) do "+
-			"update set j = excluded.j",
-		du.jid, string(j))
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-*/
-
-func loadTmpLocation(du *DataUnit, tx *dbtx) error {
-
-	mockid, name := mockLocation(du.J)
-
-	if tx.locset[mockid] == "" {
-		_, err := tx.ldp.Exec(
-			"INSERT INTO locations (location_id, "+
-				"location_name) "+
-				"VALUES ($1, $2) "+
-				"ON CONFLICT (location_id) DO "+
-				"UPDATE SET location_name = "+
-				"EXCLUDED.location_name",
-			mockid, name)
+	case "tmp_loans_locations":
+		err := loadTmpLoanLocation(tx, jtype, j)
 		if err != nil {
 			return err
 		}
-		tx.locset[mockid] = mockid
-	}
-
-	return nil
-}
-
-func loadLoan(du *DataUnit, tx *dbtx) error {
-
-	loanId := du.Jid
-	userId := du.J["userId"].(string)
-	loanDate := du.J["loanDate"].(string)
-
-	loanlocJ, err := lookupMirror(tx, "tmp_loans_locations", loanId)
-	if err != nil {
-		return err
-	}
-	if loanlocJ == nil {
-		return fmt.Errorf("Loan %v is missing location data",
-			loanId)
-	}
-
-	mockid, _ := mockLocation(loanlocJ)
-
-	_, err = tx.ldp.Exec(
-		"INSERT INTO loans (loan_id, user_id, location_id, "+
-			"loan_date) "+
-			"VALUES ($1, $2, $3, $4) "+
-			"ON CONFLICT (loan_id) DO "+
-			"UPDATE SET user_id = EXCLUDED.user_id, "+
-			"location_id = EXCLUDED.location_id, "+
-			"loan_date = EXCLUDED.loan_date",
-		loanId, userId, mockid, loanDate)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func mockLocation(j map[string]interface{}) (string, string) {
-	item := j["item"]
-	location := item.(map[string]interface{})["location"]
-	name := location.(map[string]interface{})["name"].(string)
-	mockid := "id-" +
-		strings.Replace(strings.ToLower(name), " ", "-", -1)
-	return mockid, name
-}
-
-func loadUser(du *DataUnit, tx *dbtx) error {
-
-	userName := du.J["username"].(string)
-	active := du.J["active"].(string)
-
-	groupJid := du.J["patronGroup"].(string)
-
-	//groupJ, err := lookupMirror(tx, "groups", groupJid)
-	groupName, groupDesc, found, err := recallGroup(tx, groupJid)
-	if err != nil {
-		return err
-	}
-	if !found {
-		err := storeUser(du, tx)
+	case "loans":
+		err := loadLoan(tx, jtype, j)
 		if err != nil {
 			return err
 		}
-		groupName = missingDataString
-		groupDesc = missingDataString
-	}
-	_ = groupDesc
-
-	_, err = tx.ldp.Exec(
-		"INSERT INTO users AS u "+
-			"(user_id, user_name, active, group_name) "+
-			"VALUES ($1, $2, $3, $4) "+
-			"ON CONFLICT (user_id) DO "+
-			"UPDATE SET user_name = EXCLUDED.user_name, "+
-			"active = EXCLUDED.active, "+
-			"group_name = EXCLUDED.group_name "+
-			"WHERE u.user_name <> EXCLUDED.user_name OR "+
-			"u.active <> EXCLUDED.active OR "+
-			"u.group_name <> EXCLUDED.group_name",
-		du.Jid,
-		userName,
-		active,
-		groupName)
-	if err != nil {
-		return err
+	default:
+		return fmt.Errorf("unknown type \"%v\"", jtype)
 	}
 
 	return nil
 }
 
-func storeUser(du *DataUnit, tx *dbtx) error {
+func loadGroup(tx *sql.Tx, jtype string, j map[string]interface{}) error {
 
-	id := du.J["id"].(string)
-	groupId := du.J["patronGroup"].(string)
+	id := j["id"].(string)
+	groupName := j["group"].(string)
 
-	_, err := tx.stage2.Exec(
-		"INSERT INTO dim.users AS u "+
-			"(id, group_id) "+
+	_, err := tx.Exec(
+		"INSERT INTO groups AS g "+
+			"(id, group_name) "+
 			"VALUES ($1, $2) "+
 			"ON CONFLICT (id) DO "+
-			"UPDATE SET group_id = EXCLUDED.group_id "+
-			"WHERE u.group_id <> EXCLUDED.group_id",
-		id, groupId)
+			"UPDATE SET group_name = EXCLUDED.group_name "+
+			"WHERE g.group_name <> EXCLUDED.group_name",
+		id, groupName)
 	if err != nil {
 		return err
 	}
@@ -441,118 +176,77 @@ func storeUser(du *DataUnit, tx *dbtx) error {
 	return nil
 }
 
-func storeGroup(du *DataUnit, tx *dbtx) error {
+func loadUser(tx *sql.Tx, jtype string, j map[string]interface{}) error {
 
-	id := du.J["id"].(string)
-	name := du.J["group"].(string)
-	description := du.J["desc"].(string)
+	id := j["id"].(string)
+	username := j["username"].(string)
+	active := j["active"].(string)
+	patronGroupId := j["patronGroup"].(string)
 
-	_, err := tx.stage2.Exec(
-		"INSERT INTO denorm.groups AS g "+
-			"(id, name, description) "+
+	_, err := tx.Exec(
+		"INSERT INTO users AS u "+
+			"(id, username, active, patron_group_id) "+
+			"VALUES ($1, $2, $3, $4) "+
+			"ON CONFLICT (id) DO "+
+			"UPDATE SET username = EXCLUDED.username, "+
+			"active = EXCLUDED.active, "+
+			"patron_group_id = EXCLUDED.patron_group_id "+
+			"WHERE u.username <> EXCLUDED.username OR "+
+			"u.active <> EXCLUDED.active OR "+
+			"u.patron_group_id <> EXCLUDED.patron_group_id",
+		id, username, active, patronGroupId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func loadTmpLoanLocation(tx *sql.Tx, jtype string,
+	j map[string]interface{}) error {
+
+	loanId := j["id"].(string)
+	item := j["item"]
+	location := item.(map[string]interface{})["location"]
+	locationName := location.(map[string]interface{})["name"].(string)
+
+	_, err := tx.Exec(
+		"INSERT INTO tmp_loans_locations AS t "+
+			"(loan_id, location_name) "+
+			"VALUES ($1, $2) "+
+			"ON CONFLICT (loan_id) DO "+
+			"UPDATE SET location_name = EXCLUDED.location_name "+
+			"WHERE t.location_name <> EXCLUDED.location_name",
+		loanId, locationName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func loadLoan(tx *sql.Tx, jtype string, j map[string]interface{}) error {
+
+	id := j["id"].(string)
+	userId := j["userId"].(string)
+	loanDateStr := j["loanDate"].(string)
+
+	layout := "2006-01-02T15:04:05Z"
+	loanDate, _ := time.Parse(layout, loanDateStr)
+
+	_, err := tx.Exec(
+		"INSERT INTO loans AS l "+
+			"(id, user_id, loan_date) "+
 			"VALUES ($1, $2, $3) "+
 			"ON CONFLICT (id) DO "+
-			"UPDATE SET name = EXCLUDED.name, "+
-			"description = EXCLUDED.description "+
-			"WHERE g.name <> EXCLUDED.name OR "+
-			"g.description <> EXCLUDED.description",
-		id, name, description)
+			"UPDATE SET user_id = EXCLUDED.user_id, "+
+			"loan_date = EXCLUDED.loan_date "+
+			"WHERE l.user_id <> EXCLUDED.user_id OR "+
+			"l.loan_date <> EXCLUDED.loan_date",
+		id, userId, loanDate)
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func recallGroup(tx *dbtx, id string) (string, string, bool, error) {
-
-	rows, err := tx.stage2.Query(
-		"SELECT name, description "+
-			"FROM denorm.groups "+
-			"WHERE id = $1",
-		id)
-	if err != nil {
-		return "", "", false, err
-	}
-	defer rows.Close()
-
-	if !rows.Next() {
-		return "", "", false, nil
-	}
-
-	var name string
-	var description string
-	err = rows.Scan(&name, &description)
-	if err != nil {
-		return "", "", false, err
-	}
-
-	return name, description, true, nil
-}
-
-func lookupMirror(tx *dbtx, jtype string, jid string) (map[string]interface{},
-	error) {
-
-	table, err := tableName(jtype)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := tx.stage2.Query(
-		"SELECT j "+
-			"FROM "+table+" "+
-			"WHERE jid = $1",
-		jid)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	if !rows.Next() {
-		return nil, nil
-	}
-
-	var j map[string]interface{}
-	var js string
-	err = rows.Scan(&js)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal([]byte(js), &j)
-	if err != nil {
-		return nil, err
-	}
-
-	return j, nil
-}
-
-func deleteFromStage(tx *dbtx, id int64) error {
-
-	_, err := tx.stage1.Exec(
-		"DELETE FROM stage WHERE id <= $1", id)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func tableName(jtype string) (string, error) {
-	switch jtype {
-	case "groups",
-		//"loans",
-		//"users",
-		"tmp_loans_locations":
-		return jtype, nil
-	default:
-		return "", fmt.Errorf("Data unit type \"%s\" is unknown", jtype)
-	}
-}
-
-type DataUnit struct {
-	Id    int64
-	Jtype string
-	Jid   string
-	J     map[string]interface{}
 }
