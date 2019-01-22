@@ -47,7 +47,7 @@ SELECT u.id,
         LEFT JOIN groups g ON u.patron_group_id = g.id;
 
 CREATE VIEW dim_locations AS
-SELECT 'id-' || replace(lower(tll.location_name), ' ', '-') location_id,
+SELECT 'id-' || replace(lower(tll.location_name), ' ', '-') id,
        tll.location_name
     FROM (
         SELECT DISTINCT location_name FROM tmp_loans_locations
@@ -63,6 +63,6 @@ SELECT l.id,
        l.loan_date,
        l.due_date
     FROM loans l
-        JOIN tmp_loans_locations tll ON l.id = tll.loan_id;
+        LEFT JOIN tmp_loans_locations tll ON l.id = tll.loan_id;
 
 
