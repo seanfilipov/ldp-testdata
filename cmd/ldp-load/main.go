@@ -160,15 +160,18 @@ func loadGroup(tx *sql.Tx, jtype string, j map[string]interface{}) error {
 
 	id := j["id"].(string)
 	groupName := j["group"].(string)
+	description := j["desc"].(string)
 
 	_, err := tx.Exec(
 		"INSERT INTO groups AS g "+
-			"(id, group_name) "+
-			"VALUES ($1, $2) "+
+			"(id, group_name, description) "+
+			"VALUES ($1, $2, $3) "+
 			"ON CONFLICT (id) DO "+
-			"UPDATE SET group_name = EXCLUDED.group_name "+
-			"WHERE g.group_name <> EXCLUDED.group_name",
-		id, groupName)
+			"UPDATE SET group_name = EXCLUDED.group_name, "+
+			"description = EXCLUDED.description "+
+			"WHERE g.group_name <> EXCLUDED.group_name OR "+
+			"g.description <> EXCLUDED.description",
+		id, groupName, description)
 	if err != nil {
 		return err
 	}
@@ -180,21 +183,28 @@ func loadUser(tx *sql.Tx, jtype string, j map[string]interface{}) error {
 
 	id := j["id"].(string)
 	username := j["username"].(string)
+	barcode := j["barcode"].(string)
+	userType := j["type"].(string)
 	active := j["active"].(string)
 	patronGroupId := j["patronGroup"].(string)
 
 	_, err := tx.Exec(
 		"INSERT INTO users AS u "+
-			"(id, username, active, patron_group_id) "+
-			"VALUES ($1, $2, $3, $4) "+
+			"(id, username, barcode, user_type, active, "+
+			"patron_group_id) "+
+			"VALUES ($1, $2, $3, $4, $5, $6) "+
 			"ON CONFLICT (id) DO "+
 			"UPDATE SET username = EXCLUDED.username, "+
+			"barcode = EXCLUDED.barcode, "+
+			"user_type = EXCLUDED.user_type, "+
 			"active = EXCLUDED.active, "+
 			"patron_group_id = EXCLUDED.patron_group_id "+
 			"WHERE u.username <> EXCLUDED.username OR "+
+			"u.barcode <> EXCLUDED.barcode OR "+
+			"u.user_type <> EXCLUDED.user_type OR "+
 			"u.active <> EXCLUDED.active OR "+
 			"u.patron_group_id <> EXCLUDED.patron_group_id",
-		id, username, active, patronGroupId)
+		id, username, barcode, userType, active, patronGroupId)
 	if err != nil {
 		return err
 	}
@@ -206,8 +216,8 @@ func loadTmpLoanLocation(tx *sql.Tx, jtype string,
 	j map[string]interface{}) error {
 
 	loanId := j["id"].(string)
-	item := j["item"]
-	location := item.(map[string]interface{})["location"]
+	item := j["item"].(map[string]interface{})
+	location := item["location"]
 	locationName := location.(map[string]interface{})["name"].(string)
 
 	_, err := tx.Exec(
@@ -229,21 +239,38 @@ func loadLoan(tx *sql.Tx, jtype string, j map[string]interface{}) error {
 
 	id := j["id"].(string)
 	userId := j["userId"].(string)
+	itemId := j["itemId"].(string)
+	action := j["action"].(string)
+
+	status := j["status"].(map[string]interface{})
+	statusName := status["name"].(string)
+
 	loanDateStr := j["loanDate"].(string)
+	dueDateStr := j["dueDate"].(string)
 
 	layout := "2006-01-02T15:04:05Z"
 	loanDate, _ := time.Parse(layout, loanDateStr)
+	dueDate, _ := time.Parse(layout, dueDateStr)
 
 	_, err := tx.Exec(
 		"INSERT INTO loans AS l "+
-			"(id, user_id, loan_date) "+
-			"VALUES ($1, $2, $3) "+
+			"(id, user_id, item_id, action, status_name, "+
+			"loan_date, due_date) "+
+			"VALUES ($1, $2, $3, $4, $5, $6, $7) "+
 			"ON CONFLICT (id) DO "+
 			"UPDATE SET user_id = EXCLUDED.user_id, "+
-			"loan_date = EXCLUDED.loan_date "+
+			"item_id = EXCLUDED.item_id, "+
+			"action = EXCLUDED.action, "+
+			"status_name = EXCLUDED.status_name, "+
+			"loan_date = EXCLUDED.loan_date, "+
+			"due_date = EXCLUDED.due_date "+
 			"WHERE l.user_id <> EXCLUDED.user_id OR "+
-			"l.loan_date <> EXCLUDED.loan_date",
-		id, userId, loanDate)
+			"l.item_id <> EXCLUDED.item_id OR "+
+			"l.action <> EXCLUDED.action OR "+
+			"l.status_name <> EXCLUDED.status_name OR "+
+			"l.loan_date <> EXCLUDED.loan_date OR "+
+			"l.due_date <> EXCLUDED.due_date",
+		id, userId, itemId, action, statusName, loanDate, dueDate)
 	if err != nil {
 		return err
 	}
