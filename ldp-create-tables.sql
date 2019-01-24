@@ -1,11 +1,13 @@
 -- Extension for crosstab() requires superuser to install:
 -- CREATE EXTENSION IF NOT EXISTS tablefunc;
 
+CREATE SEQUENCE na_groups;
+
 CREATE TABLE groups (
     id           UUID NOT NULL PRIMARY KEY,
-    group_name   TEXT NOT NULL UNIQUE,
+    group_name   TEXT NOT NULL UNIQUE DEFAULT 'NOT AVAILABLE ' || nextval('na_groups'),
         CHECK (group_name <> ''),
-    description  TEXT NOT NULL DEFAULT ''
+    description  TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
 );
 
 CREATE TABLE users (
@@ -16,7 +18,7 @@ CREATE TABLE users (
     barcode          TEXT NOT NULL DEFAULT '',
     user_type        TEXT NOT NULL DEFAULT '',
     active           BOOLEAN NOT NULL,
-    patron_group_id  UUID NOT NULL
+    patron_group_id  UUID NOT NULL REFERENCES groups (id)
 );
 
 CREATE TABLE loans (

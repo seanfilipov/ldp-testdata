@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/folio-org/ldp/cmd/internal/ldputil"
+	"github.com/folio-org/ldp/load"
 )
 
 func main() {
@@ -15,138 +18,74 @@ func main() {
 		return
 	}
 
-	sourcedir := config.Get("extract", "dir")
-	targetdir := config.Get("stage", "dir")
-	// TODO create new temp directory under targetdir
+	extractDir := config.Get("extract", "dir")
 
-	var st stage
-
-	st.start, err = os.Create(targetdir + "/00001-start.sql")
+	db, err := ldputil.OpenDatabase(
+		config.Get("ldp-database", "host"),
+		config.Get("ldp-database", "port"),
+		config.Get("ldp-database", "user"),
+		config.Get("ldp-database", "password"),
+		config.Get("ldp-database", "dbname"))
 	if err != nil {
 		ldputil.PrintError(err)
 		return
 	}
-	defer st.start.Close()
-	fmt.Fprintf(st.start, "%s\n", sqlStartTransaction())
+	defer db.Close()
 
-	st.deleteStage, err = os.Create(targetdir + "/00002-delete-stage.sql")
+	tx, err := db.BeginTx(context.TODO(), &sql.TxOptions{
+		Isolation: sql.LevelSerializable,
+		ReadOnly:  false,
+	})
 	if err != nil {
 		ldputil.PrintError(err)
 		return
 	}
-	defer st.deleteStage.Close()
-	fmt.Fprintf(st.deleteStage, `
-DELETE FROM stage.users;
-DELETE FROM stage.groups;
-`)
+	defer tx.Rollback()
 
-	st.groups, err = os.Create(targetdir + "/00010-groups.sql")
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-	defer st.groups.Close()
-	fmt.Fprintf(st.groups,
-		"COPY stage.groups (id, group_name, description) FROM stdin;\n")
-
-	st.usersNaGroups, err = os.Create(targetdir + "/00020-users-na-groups.sql")
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-	defer st.usersNaGroups.Close()
-	fmt.Fprintf(st.usersNaGroups, `
-INSERT INTO stage.groups (id) VALUES
-`)
-
-	st.users, err = os.Create(targetdir + "/00021-users.sql")
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-	defer st.users.Close()
-	fmt.Fprintf(st.users,
-		"COPY stage.users (id, username, barcode, user_type, active, "+
-			"patron_group_id) FROM stdin;\n")
-
-	st.mergeAll, err = os.Create(targetdir + "/90000-merge-all.sql")
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-	defer st.mergeAll.Close()
-	fmt.Fprintf(st.mergeAll, `
-INSERT INTO public.groups (id, group_name, description)
-    SELECT id, group_name, description
-        FROM stage.groups
-    ON CONFLICT (id) DO
-        UPDATE SET group_name = EXCLUDED.group_name,
-	           description = EXCLUDED.description;
-`)
-	fmt.Fprintf(st.mergeAll, `
-INSERT INTO public.users (id, username, barcode, user_type, active, patron_group_id)
-    SELECT id, username, barcode, user_type, active, patron_group_id
-        FROM stage.users
-    ON CONFLICT (id) DO
-        UPDATE SET username = EXCLUDED.username,
-	           barcode = EXCLUDED.barcode,
-	           user_type = EXCLUDED.user_type,
-	           active = EXCLUDED.active,
-	           patron_group_id = EXCLUDED.patron_group_id;
-`)
-
-	st.end, err = os.Create(targetdir + "/99999-end.sql")
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-	defer st.end.Close()
-	fmt.Fprintf(st.end, "%s\n", sqlCommit())
-
-	err = stageAll("groups", sourcedir+"/groups.json", &st)
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-
-	err = stageAll("users", sourcedir+"/users.json", &st)
+	err = stageAll("groups", extractDir+"/groups.json", tx)
 	if err != nil {
 		ldputil.PrintError(err)
 		return
 	}
 
 	/*
-		for x := 1; x <= 20; x++ {
-			err = stageAll("tmp_loans_locations",
-				sourcedir+fmt.Sprintf("/circulation.loans.json.%v",
-					x),
-				tx)
-			if err != nil {
-				ldputil.PrintError(err)
-				return
-			}
+		err = stageAll("users", sourcedir+"/users.json", &st)
+		if err != nil {
+			ldputil.PrintError(err)
+			return
 		}
 
-		for x := 1; x <= 20; x++ {
-			err = stageAll("loans",
-				sourcedir+fmt.Sprintf("/loan-storage.loans.json.%v",
-					x),
-				tx)
-			if err != nil {
-				ldputil.PrintError(err)
-				return
+			for x := 1; x <= 20; x++ {
+				err = stageAll("tmp_loans_locations",
+					sourcedir+fmt.Sprintf("/circulation.loans.json.%v",
+						x),
+					tx)
+				if err != nil {
+					ldputil.PrintError(err)
+					return
+				}
 			}
-		}
+
+			for x := 1; x <= 20; x++ {
+				err = stageAll("loans",
+					sourcedir+fmt.Sprintf("/loan-storage.loans.json.%v",
+						x),
+					tx)
+				if err != nil {
+					ldputil.PrintError(err)
+					return
+				}
+			}
 	*/
 
-	fmt.Fprintf(st.groups, "\\.\n")
-	fmt.Fprintf(st.usersNaGroups, `
-ON CONFLICT (id) DO NOTHING;
-`)
-	fmt.Fprintf(st.users, "\\.\n")
+	err = tx.Commit()
+	if err != nil {
+		ldputil.PrintError(err)
+		return
+	}
 }
 
-func stageAll(jtype string, filename string, st *stage) error {
+func stageAll(jtype string, filename string, tx *sql.Tx) error {
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -174,15 +113,16 @@ func stageAll(jtype string, filename string, st *stage) error {
 			return err
 		}
 
-		err = stageOne(st, jtype, i.(map[string]interface{}))
-		if err != nil {
-			return err
-		}
+		err = load.Update(jtype, i.(map[string]interface{}), tx)
+		//err = stageOne(st, jtype, i.(map[string]interface{}))
+		//if err != nil {
+		//return err
+		//}
 
 		count++
 	}
 
-	fmt.Printf("%s %v %s\n", jtype, count, filename)
+	//fmt.Printf("%s %v %s\n", jtype, count, filename)
 
 	return nil
 }
