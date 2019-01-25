@@ -1,4 +1,4 @@
-package load
+package loader
 
 import (
 	"database/sql"
@@ -16,7 +16,7 @@ func updateGroups(id string, json map[string]interface{}, tx *sql.Tx) error {
 	}
 }
 
-var sqlUpdateGroups string = compact("" +
+var sqlUpdateGroups string = removeExtraSpace("" +
 	"  INSERT INTO groups AS g                           \n" +
 	"      (id, group_name, description)                 \n" +
 	"      VALUES ($1, $2, $3)                           \n" +
@@ -26,7 +26,7 @@ var sqlUpdateGroups string = compact("" +
 	"      WHERE g.group_name <> EXCLUDED.group_name OR  \n" +
 	"            g.description <> EXCLUDED.description;  \n")
 
-var sqlUpdateGroupsEmpty string = compact("" +
+var sqlUpdateGroupsEmpty string = removeExtraSpace("" +
 	"  INSERT INTO groups                \n" +
 	"      (id)                          \n" +
 	"      VALUES ($1)                   \n" +

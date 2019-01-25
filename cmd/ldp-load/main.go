@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/folio-org/ldp/cmd/internal/ldputil"
-	"github.com/folio-org/ldp/load"
+	"github.com/folio-org/ldp/loader"
 )
 
 func main() {
@@ -54,30 +54,27 @@ func main() {
 		return
 	}
 
-	/*
-
-		for x := 1; x <= 20; x++ {
-			err = stageAll("tmp_loans_locations",
-				sourcedir+fmt.Sprintf("/circulation.loans.json.%v",
-					x),
-				tx)
-			if err != nil {
-				ldputil.PrintError(err)
-				return
-			}
+	for x := 1; x <= 20; x++ {
+		err = stageAll("tmp_loans_locations",
+			extractDir+fmt.Sprintf("/circulation.loans.json.%v",
+				x),
+			tx)
+		if err != nil {
+			ldputil.PrintError(err)
+			return
 		}
+	}
 
-		for x := 1; x <= 20; x++ {
-			err = stageAll("loans",
-				sourcedir+fmt.Sprintf("/loan-storage.loans.json.%v",
-					x),
-				tx)
-			if err != nil {
-				ldputil.PrintError(err)
-				return
-			}
+	for x := 1; x <= 20; x++ {
+		err = stageAll("loans",
+			extractDir+fmt.Sprintf("/loan-storage.loans.json.%v",
+				x),
+			tx)
+		if err != nil {
+			ldputil.PrintError(err)
+			return
 		}
-	*/
+	}
 
 	err = tx.Commit()
 	if err != nil {
@@ -114,7 +111,7 @@ func stageAll(jtype string, filename string, tx *sql.Tx) error {
 			return err
 		}
 
-		err = load.Update(jtype, i.(map[string]interface{}), tx)
+		err = loader.Update(jtype, i.(map[string]interface{}), tx)
 		if err != nil {
 			return err
 		}
@@ -126,7 +123,7 @@ func stageAll(jtype string, filename string, tx *sql.Tx) error {
 		count++
 	}
 
-	//fmt.Printf("%s %v %s\n", jtype, count, filename)
+	fmt.Printf("%s %v %s\n", jtype, count, filename)
 
 	return nil
 }

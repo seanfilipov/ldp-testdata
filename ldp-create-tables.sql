@@ -11,32 +11,47 @@ CREATE TABLE groups (
     description  TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
 );
 
+INSERT INTO groups (id) VALUES ('00000000-0000-0000-0000-000000000000');
+
+CREATE SEQUENCE na_users;
+
 CREATE TABLE users (
     id               UUID NOT NULL PRIMARY KEY,
     -- username         TEXT NOT NULL UNIQUE,
-    username         TEXT NOT NULL, -- TODO fix test data
+    username         TEXT NOT NULL  -- TODO fix test data
+            DEFAULT 'NOT AVAILABLE [' || nextval('na_users') || ']',
         CHECK (username <> ''),
-    barcode          TEXT NOT NULL DEFAULT '',
-    user_type        TEXT NOT NULL DEFAULT '',
-    active           BOOLEAN NOT NULL,
+    barcode          TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
+    user_type        TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
+    active           BOOLEAN NOT NULL DEFAULT FALSE,
     patron_group_id  UUID NOT NULL REFERENCES groups (id)
+            DEFAULT '00000000-0000-0000-0000-000000000000'
 );
+
+INSERT INTO users (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 CREATE TABLE loans (
     id           UUID NOT NULL PRIMARY KEY,
-    user_id      UUID NOT NULL,
-    item_id      UUID NOT NULL,
-    action       TEXT NOT NULL DEFAULT '',
-    status_name  TEXT NOT NULL DEFAULT '',
-    loan_date    TIMESTAMP NOT NULL,
-    due_date     TIMESTAMP NOT NULL
+    user_id      UUID NOT NULL REFERENCES users (id)
+            DEFAULT '00000000-0000-0000-0000-000000000000',
+    item_id      UUID NOT NULL
+            DEFAULT '00000000-0000-0000-0000-000000000000',
+    action       TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
+    status_name  TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
+    loan_date    TIMESTAMP NOT NULL DEFAULT 'epoch',
+    due_date     TIMESTAMP NOT NULL DEFAULT 'epoch'
 );
+
+INSERT INTO loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 CREATE TABLE tmp_loans_locations (
     loan_id        UUID NOT NULL PRIMARY KEY,
-    location_name  TEXT NOT NULL,
+    location_name  TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
         CHECK (location_name <> '')
 );
+
+INSERT INTO tmp_loans_locations (loan_id)
+    VALUES ('00000000-0000-0000-0000-000000000000');
 
 CREATE VIEW dim_users AS
 SELECT u.id,

@@ -1,4 +1,4 @@
-package load
+package loader
 
 import (
 	"database/sql"
@@ -12,6 +12,10 @@ func Update(jsonType string, json map[string]interface{}, tx *sql.Tx) error {
 		return updateGroups(id, json, tx)
 	case "users":
 		return updateUsers(id, json, tx)
+	case "loans":
+		return updateLoans(id, json, tx)
+	case "tmp_loans_locations":
+		return updateTmpLoansLocs(id, json, tx)
 	default:
 		return fmt.Errorf("unknown type \"%v\"", jsonType)
 	}
