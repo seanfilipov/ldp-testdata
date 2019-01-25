@@ -5,8 +5,9 @@ CREATE SEQUENCE na_groups;
 
 CREATE TABLE groups (
     id           UUID NOT NULL PRIMARY KEY,
-    group_name   TEXT NOT NULL UNIQUE DEFAULT 'NOT AVAILABLE ' || nextval('na_groups'),
-        CHECK (group_name <> ''),
+    group_name   TEXT NOT NULL UNIQUE
+            DEFAULT 'NOT AVAILABLE [' || nextval('na_groups') || ']',
+	CHECK (group_name <> ''),
     description  TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
 );
 

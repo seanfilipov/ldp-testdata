@@ -48,34 +48,35 @@ func main() {
 		return
 	}
 
+	err = stageAll("users", extractDir+"/users.json", tx)
+	if err != nil {
+		ldputil.PrintError(err)
+		return
+	}
+
 	/*
-		err = stageAll("users", sourcedir+"/users.json", &st)
-		if err != nil {
-			ldputil.PrintError(err)
-			return
+
+		for x := 1; x <= 20; x++ {
+			err = stageAll("tmp_loans_locations",
+				sourcedir+fmt.Sprintf("/circulation.loans.json.%v",
+					x),
+				tx)
+			if err != nil {
+				ldputil.PrintError(err)
+				return
+			}
 		}
 
-			for x := 1; x <= 20; x++ {
-				err = stageAll("tmp_loans_locations",
-					sourcedir+fmt.Sprintf("/circulation.loans.json.%v",
-						x),
-					tx)
-				if err != nil {
-					ldputil.PrintError(err)
-					return
-				}
+		for x := 1; x <= 20; x++ {
+			err = stageAll("loans",
+				sourcedir+fmt.Sprintf("/loan-storage.loans.json.%v",
+					x),
+				tx)
+			if err != nil {
+				ldputil.PrintError(err)
+				return
 			}
-
-			for x := 1; x <= 20; x++ {
-				err = stageAll("loans",
-					sourcedir+fmt.Sprintf("/loan-storage.loans.json.%v",
-						x),
-					tx)
-				if err != nil {
-					ldputil.PrintError(err)
-					return
-				}
-			}
+		}
 	*/
 
 	err = tx.Commit()
@@ -114,6 +115,9 @@ func stageAll(jtype string, filename string, tx *sql.Tx) error {
 		}
 
 		err = load.Update(jtype, i.(map[string]interface{}), tx)
+		if err != nil {
+			return err
+		}
 		//err = stageOne(st, jtype, i.(map[string]interface{}))
 		//if err != nil {
 		//return err
