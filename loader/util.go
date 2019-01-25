@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func removeExtraSpace(s string) string {
+func trimSql(s string) string {
 	sp := strings.Split(s, "\n")
 	var b strings.Builder
 	for _, line := range sp {

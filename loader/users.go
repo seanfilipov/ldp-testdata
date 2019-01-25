@@ -24,7 +24,7 @@ func updateUsers(id string, json map[string]interface{}, tx *sql.Tx) error {
 	}
 }
 
-var sqlUpdateUsers string = removeExtraSpace("" +
+var sqlUpdateUsers string = trimSql("" +
 	"  INSERT INTO users AS u                                    \n" +
 	"      (id, username, barcode, user_type, active,            \n" +
 	"              patron_group_id)                              \n" +
@@ -41,7 +41,7 @@ var sqlUpdateUsers string = removeExtraSpace("" +
 	"            u.active <> EXCLUDED.active OR                  \n" +
 	"            u.patron_group_id <> EXCLUDED.patron_group_id;  \n")
 
-var sqlUpdateUsersEmpty string = removeExtraSpace("" +
+var sqlUpdateUsersEmpty string = trimSql("" +
 	"  INSERT INTO users                 \n" +
 	"      (id)                          \n" +
 	"      VALUES ($1)                   \n" +

@@ -30,7 +30,7 @@ func updateLoans(id string, json map[string]interface{}, tx *sql.Tx) error {
 	}
 }
 
-var sqlUpdateLoans string = removeExtraSpace("" +
+var sqlUpdateLoans string = trimSql("" +
 	"  INSERT INTO loans AS l                                      \n" +
 	"      (id, user_id, item_id, action, status_name, loan_date,  \n" +
 	"              due_date)                                       \n" +
@@ -49,7 +49,7 @@ var sqlUpdateLoans string = removeExtraSpace("" +
 	"            l.loan_date <> EXCLUDED.loan_date OR              \n" +
 	"            l.due_date <> EXCLUDED.due_date;                  \n")
 
-var sqlUpdateLoansEmpty string = removeExtraSpace("" +
+var sqlUpdateLoansEmpty string = trimSql("" +
 	"  INSERT INTO loans                 \n" +
 	"      (id)                          \n" +
 	"      VALUES ($1)                   \n" +
