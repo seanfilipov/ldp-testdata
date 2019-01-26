@@ -68,17 +68,17 @@ INSERT INTO tmp_loans_locations (loan_id)
 CREATE SEQUENCE na_d_users;
 
 CREATE TABLE d_users (
-    id               UUID NOT NULL PRIMARY KEY,
+    id                 UUID NOT NULL PRIMARY KEY,
     -- username         TEXT NOT NULL UNIQUE,
-    username         TEXT NOT NULL  -- TODO fix test data
+    username           TEXT NOT NULL  -- TODO fix test data
             DEFAULT 'NOT AVAILABLE [' || nextval('na_d_users') || ']',
         CHECK (username <> ''),
-    barcode          TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
-    user_type        TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
-    active           BOOLEAN NOT NULL DEFAULT FALSE,
-    group_name       TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
+    barcode            TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
+    user_type          TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
+    active             BOOLEAN NOT NULL DEFAULT FALSE,
+    group_name         TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
 	CHECK (group_name <> ''),
-    description      TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
+    group_description  TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
 );
 
 INSERT INTO d_users (id) VALUES ('00000000-0000-0000-0000-000000000000');

@@ -13,6 +13,9 @@ func updateTmpLoansLocs(id string, json map[string]interface{},
 		locationName :=
 			location.(map[string]interface{})["name"].(string)
 		_, err := exec(tx, sqlUpdateTmpLoansLocs, loanId, locationName)
+		// d_locations
+		_, err = exec(tx, sqlUpdateDLocations, locationName,
+			locationName)
 		return err
 	} else {
 		_, err := exec(tx, sqlUpdateTmpLoansLocsEmpty, id)
@@ -27,6 +30,15 @@ var sqlUpdateTmpLoansLocs string = trimSql("" +
 	"      ON CONFLICT (loan_id) DO UPDATE                   \n" +
 	"      SET location_name = EXCLUDED.location_name        \n" +
 	"      WHERE t.location_name <> EXCLUDED.location_name;  \n")
+
+var sqlUpdateDLocations string = trimSql("" +
+	"  INSERT INTO d_locations AS l                          \n" +
+	"      (id, location_name)                               \n" +
+	"      SELECT 'id-' || replace(lower($1), ' ', '-'),     \n" +
+	"             $2                                         \n" +
+	"      ON CONFLICT (id) DO UPDATE                        \n" +
+	"      SET location_name = EXCLUDED.location_name        \n" +
+	"      WHERE l.location_name <> EXCLUDED.location_name;  \n")
 
 var sqlUpdateTmpLoansLocsEmpty string = trimSql("" +
 	"  INSERT INTO tmp_loans_locations        \n" +

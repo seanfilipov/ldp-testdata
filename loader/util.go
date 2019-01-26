@@ -22,7 +22,7 @@ func trimSql(s string) string {
 }
 
 func exec(tx *sql.Tx, query string, args ...interface{}) (sql.Result, error) {
-	if true {
+	if false {
 		fmt.Fprintf(os.Stderr, "%s{", query)
 		for x, a := range args {
 			if x != 0 {
