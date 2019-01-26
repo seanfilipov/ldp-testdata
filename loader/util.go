@@ -2,6 +2,8 @@ package loader
 
 import (
 	"database/sql"
+	"fmt"
+	"os"
 	"strings"
 )
 
@@ -20,7 +22,7 @@ func trimSql(s string) string {
 }
 
 func exec(tx *sql.Tx, query string, args ...interface{}) (sql.Result, error) {
-	/*
+	if true {
 		fmt.Fprintf(os.Stderr, "%s{", query)
 		for x, a := range args {
 			if x != 0 {
@@ -29,6 +31,6 @@ func exec(tx *sql.Tx, query string, args ...interface{}) (sql.Result, error) {
 			fmt.Fprintf(os.Stderr, "\"%s\"", a)
 		}
 		fmt.Fprintf(os.Stderr, "}\n\n")
-	*/
+	}
 	return tx.Exec(query, args...)
 }

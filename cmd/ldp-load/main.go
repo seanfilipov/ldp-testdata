@@ -42,30 +42,32 @@ func main() {
 	}
 	defer tx.Rollback()
 
-	err = stageAll("groups", extractDir+"/groups.json", tx)
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-
-	err = stageAll("users", extractDir+"/users.json", tx)
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-
-	for x := 1; x <= 20; x++ {
-		err = stageAll("tmp_loans_locations",
-			extractDir+fmt.Sprintf("/circulation.loans.json.%v",
-				x),
-			tx)
+	/*
+		err = stageAll("groups", extractDir+"/groups.json", tx)
 		if err != nil {
 			ldputil.PrintError(err)
 			return
 		}
-	}
 
-	for x := 1; x <= 20; x++ {
+		err = stageAll("users", extractDir+"/users.json", tx)
+		if err != nil {
+			ldputil.PrintError(err)
+			return
+		}
+
+		for x := 1; x <= 20; x++ {
+			err = stageAll("tmp_loans_locations",
+				extractDir+fmt.Sprintf("/circulation.loans.json.%v",
+					x),
+				tx)
+			if err != nil {
+				ldputil.PrintError(err)
+				return
+			}
+		}
+	*/
+
+	for x := 1; x <= 2; x++ {
 		err = stageAll("loans",
 			extractDir+fmt.Sprintf("/loan-storage.loans.json.%v",
 				x),
