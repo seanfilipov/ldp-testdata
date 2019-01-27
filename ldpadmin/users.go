@@ -1,28 +1,29 @@
-package loader
+package ldpadmin
 
 import (
 	"database/sql"
 )
 
-func updateUsers(id string, json map[string]interface{}, tx *sql.Tx) error {
+func updateUsers(id string, json map[string]interface{}, tx *sql.Tx,
+	opts *UpdateOptions) error {
 	if json != nil {
 		username := json["username"].(string)
 		barcode := json["barcode"].(string)
 		userType := json["type"].(string)
 		active := json["active"].(string)
 		patronGroupId := json["patronGroup"].(string)
-		err := updateGroups(patronGroupId, nil, tx)
+		err := updateGroups(patronGroupId, nil, tx, opts)
 		if err != nil {
 			return err
 		}
-		_, err = exec(tx, sqlUpdateUsers, id, username, barcode,
+		_, err = exec(tx, opts, sqlUpdateUsers, id, username, barcode,
 			userType, active, patronGroupId)
 		// d_users
-		_, err = exec(tx, sqlUpdateDUsers, id, username, barcode,
+		_, err = exec(tx, opts, sqlUpdateDUsers, id, username, barcode,
 			userType, active, patronGroupId)
 		return err
 	} else {
-		_, err := exec(tx, sqlUpdateUsersEmpty, id)
+		_, err := exec(tx, opts, sqlUpdateUsersEmpty, id)
 		return err
 	}
 }
@@ -31,7 +32,12 @@ var sqlUpdateUsers string = trimSql("" +
 	"  INSERT INTO users AS u                                    \n" +
 	"      (id, username, barcode, user_type, active,            \n" +
 	"              patron_group_id)                              \n" +
-	"      VALUES ($1, $2, $3, $4, $5, $6)                       \n" +
+	"      VALUES ($1,                                           \n" +
+	"              $2,                                           \n" +
+	"              $3,                                           \n" +
+	"              $4,                                           \n" +
+	"              $5,                                           \n" +
+	"              $6)                                           \n" +
 	"      ON CONFLICT (id) DO UPDATE                            \n" +
 	"      SET username = EXCLUDED.username,                     \n" +
 	"          barcode = EXCLUDED.barcode,                       \n" +
@@ -48,7 +54,11 @@ var sqlUpdateDUsers string = trimSql("" +
 	"  INSERT INTO d_users AS u                                      \n" +
 	"      (id, username, barcode, user_type, active,                \n" +
 	"              group_name, group_description)                    \n" +
-	"      SELECT $1, $2, $3, $4, $5,                                \n" +
+	"      SELECT $1,                                                \n" +
+	"             $2,                                                \n" +
+	"             $3,                                                \n" +
+	"             $4,                                                \n" +
+	"             $5,                                                \n" +
 	"             g.group_name,                                      \n" +
 	"             g.description                                      \n" +
 	"          FROM groups g                                         \n" +

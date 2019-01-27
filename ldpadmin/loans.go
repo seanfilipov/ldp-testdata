@@ -1,14 +1,15 @@
-package loader
+package ldpadmin
 
 import (
 	"database/sql"
 	"time"
 )
 
-func updateLoans(id string, json map[string]interface{}, tx *sql.Tx) error {
+func updateLoans(id string, json map[string]interface{}, tx *sql.Tx,
+	opts *UpdateOptions) error {
 	if json != nil {
 		userId := json["userId"].(string)
-		err := updateUsers(userId, nil, tx)
+		err := updateUsers(userId, nil, tx, opts)
 		if err != nil {
 			return err
 		}
@@ -21,14 +22,14 @@ func updateLoans(id string, json map[string]interface{}, tx *sql.Tx) error {
 		layout := "2006-01-02T15:04:05Z"
 		loanDate, _ := time.Parse(layout, loanDateStr)
 		dueDate, _ := time.Parse(layout, dueDateStr)
-		_, err = exec(tx, sqlUpdateLoans, id, userId, itemId, action,
-			statusName, loanDate, dueDate)
+		_, err = exec(tx, opts, sqlUpdateLoans, id, userId, itemId,
+			action, statusName, loanDate, dueDate)
 		// f_loans
-		_, err = exec(tx, sqlUpdateFLoans, id, userId, itemId, action,
+		_, err = exec(tx, opts, sqlUpdateFLoans, id, userId, itemId, action,
 			statusName, loanDate, dueDate, id)
 		return err
 	} else {
-		_, err := exec(tx, sqlUpdateLoansEmpty, id)
+		_, err := exec(tx, opts, sqlUpdateLoansEmpty, id)
 		return err
 	}
 }
@@ -37,7 +38,13 @@ var sqlUpdateLoans string = trimSql("" +
 	"  INSERT INTO loans AS l                                      \n" +
 	"      (id, user_id, item_id, action, status_name, loan_date,  \n" +
 	"              due_date)                                       \n" +
-	"      VALUES ($1, $2, $3, $4, $5, $6, $7)                     \n" +
+	"      VALUES ($1,                                             \n" +
+	"              $2,                                             \n" +
+	"              $3,                                             \n" +
+	"              $4,                                             \n" +
+	"              $5,                                             \n" +
+	"              $6,                                             \n" +
+	"              $7)                                             \n" +
 	"      ON CONFLICT (id) DO UPDATE                              \n" +
 	"      SET user_id = EXCLUDED.user_id,                         \n" +
 	"          item_id = EXCLUDED.item_id,                         \n" +
@@ -56,9 +63,14 @@ var sqlUpdateFLoans string = trimSql("" +
 	"  INSERT INTO f_loans AS l                                       \n" +
 	"      (id, user_id, location_id, item_id, action, status_name,   \n" +
 	"              loan_date, due_date)                               \n" +
-	"      SELECT $1, $2,                                             \n" +
+	"      SELECT $1,                                                 \n" +
+	"             $2,                                                 \n" +
 	"          'id-' || replace(lower(tll.location_name), ' ', '-'),  \n" +
-	"              $3, $4, $5, $6, $7                                 \n" +
+	"              $3,                                                \n" +
+	"              $4,                                                \n" +
+	"              $5,                                                \n" +
+	"              $6,                                                \n" +
+	"              $7                                                 \n" +
 	"          FROM tmp_loans_locations tll                           \n" +
 	"          WHERE tll.loan_id = $8                                 \n" +
 	"      ON CONFLICT (id) DO UPDATE                                 \n" +

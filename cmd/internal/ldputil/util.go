@@ -13,12 +13,17 @@ func PrintError(err error) {
 	fmt.Fprintf(os.Stderr, "%s: %s\n", os.Args[0], err)
 }
 
-func ReadConfig() (*ini.Config, error) {
-	f := os.Getenv("LDP_CONFIG_FILE")
-	if f == "" {
-		return ini.NewConfig(), nil
+func ReadConfig(filename string) (*ini.Config, error) {
+	var fn string
+	if filename != "" {
+		fn = filename
+	} else {
+		fn = os.Getenv("LDP_CONFIG_FILE")
+		if fn == "" {
+			return ini.NewConfig(), nil
+		}
 	}
-	c, err := ini.NewConfigFile(f)
+	c, err := ini.NewConfigFile(fn)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"Error reading configuration file: %v", err)
