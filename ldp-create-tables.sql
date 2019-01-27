@@ -46,6 +46,8 @@ CREATE TABLE loans (
     due_date     TIMESTAMP NOT NULL DEFAULT 'epoch'
 );
 
+CREATE INDEX ON loans (loan_date);
+
 INSERT INTO loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 CREATE SEQUENCE na_tmp_loans_locations;
@@ -129,6 +131,8 @@ CREATE TABLE f_loans (
     loan_date    TIMESTAMP NOT NULL DEFAULT 'epoch',
     due_date     TIMESTAMP NOT NULL DEFAULT 'epoch'
 );
+
+CREATE INDEX ON f_loans (loan_date);
 
 INSERT INTO f_loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
