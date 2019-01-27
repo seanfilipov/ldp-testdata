@@ -79,7 +79,7 @@ $ export LDP_CONFIG_FILE=/etc/ldp/ldp.conf
 
 ```shell
 $ createuser ldpadmin
-$ psql -O ldpadmin ldp
+$ createdb -O ldpadmin ldp
 $ ldp-init
 ```
 
@@ -90,5 +90,26 @@ To load sample data from JSON files in `~/testdata/20181214_043055`:
 ```shell
 $ ldp-update -source ~/testdata/20181214_043055
 ```
+
+### Schema
+
+The LDP database uses "star schema" with tables prefixed `f_` for fact
+and `d_` for dimension, for example, `f_loans` and `d_users`.  It also
+includes tables needed for denormalizing new data during updates, for
+example, the `groups` table.
+
+
+### Update process
+
+The `ldp-update` tool performs incremental updates, but it is also used
+for batch loads.  It reads one unit of FOLIO data (e.g. a loan
+transaction) at a time and adds it to the LDP database, overwriting any
+existing data that has the same ID.
+
+If the new data contain foreign key IDs that reference data the LDP also
+stores, the update process ensures that the referenced data exist, or if
+not, creates placeholder data that can be updated later.  This allows it
+to process new data that are streamed from FOLIO "out of order".
+
 
 
