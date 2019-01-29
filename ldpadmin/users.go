@@ -4,31 +4,31 @@ import (
 	"database/sql"
 )
 
-func updateUsers(id string, json map[string]interface{}, tx *sql.Tx,
-	opts *UpdateOptions) error {
+func loadUsers(id string, json map[string]interface{}, tx *sql.Tx,
+	opts *LoadOptions) error {
 	if json != nil {
 		username := json["username"].(string)
 		barcode := json["barcode"].(string)
 		userType := json["type"].(string)
 		active := json["active"].(string)
 		patronGroupId := json["patronGroup"].(string)
-		err := updateGroups(patronGroupId, nil, tx, opts)
+		err := loadGroups(patronGroupId, nil, tx, opts)
 		if err != nil {
 			return err
 		}
-		_, err = exec(tx, opts, sqlUpdateUsers, id, username, barcode,
+		_, err = exec(tx, opts, sqlLoadUsers, id, username, barcode,
 			userType, active, patronGroupId)
 		// d_users
-		_, err = exec(tx, opts, sqlUpdateDUsers, id, username, barcode,
+		_, err = exec(tx, opts, sqlLoadDUsers, id, username, barcode,
 			userType, active, patronGroupId)
 		return err
 	} else {
-		_, err := exec(tx, opts, sqlUpdateUsersEmpty, id)
+		_, err := exec(tx, opts, sqlLoadUsersEmpty, id)
 		return err
 	}
 }
 
-var sqlUpdateUsers string = trimSql("" +
+var sqlLoadUsers string = trimSql("" +
 	"  INSERT INTO users AS u                                    \n" +
 	"      (id, username, barcode, user_type, active,            \n" +
 	"              patron_group_id)                              \n" +
@@ -50,7 +50,7 @@ var sqlUpdateUsers string = trimSql("" +
 	"            u.active <> EXCLUDED.active OR                  \n" +
 	"            u.patron_group_id <> EXCLUDED.patron_group_id;  \n")
 
-var sqlUpdateDUsers string = trimSql("" +
+var sqlLoadDUsers string = trimSql("" +
 	"  INSERT INTO d_users AS u                                      \n" +
 	"      (id, username, barcode, user_type, active,                \n" +
 	"              group_name, group_description)                    \n" +
@@ -77,7 +77,7 @@ var sqlUpdateDUsers string = trimSql("" +
 	"            u.group_name <> EXCLUDED.group_name OR              \n" +
 	"            u.group_description <> EXCLUDED.group_description;  \n")
 
-var sqlUpdateUsersEmpty string = trimSql("" +
+var sqlLoadUsersEmpty string = trimSql("" +
 	"  INSERT INTO users                 \n" +
 	"      (id)                          \n" +
 	"      VALUES ($1)                   \n" +

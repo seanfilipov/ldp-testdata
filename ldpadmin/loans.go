@@ -5,11 +5,11 @@ import (
 	"time"
 )
 
-func updateLoans(id string, json map[string]interface{}, tx *sql.Tx,
-	opts *UpdateOptions) error {
+func loadLoans(id string, json map[string]interface{}, tx *sql.Tx,
+	opts *LoadOptions) error {
 	if json != nil {
 		userId := json["userId"].(string)
-		err := updateUsers(userId, nil, tx, opts)
+		err := loadUsers(userId, nil, tx, opts)
 		if err != nil {
 			return err
 		}
@@ -22,19 +22,19 @@ func updateLoans(id string, json map[string]interface{}, tx *sql.Tx,
 		layout := "2006-01-02T15:04:05Z"
 		loanDate, _ := time.Parse(layout, loanDateStr)
 		dueDate, _ := time.Parse(layout, dueDateStr)
-		_, err = exec(tx, opts, sqlUpdateLoans, id, userId, itemId,
+		_, err = exec(tx, opts, sqlLoadLoans, id, userId, itemId,
 			action, statusName, loanDate, dueDate)
 		// f_loans
-		_, err = exec(tx, opts, sqlUpdateFLoans, id, userId, itemId, action,
+		_, err = exec(tx, opts, sqlLoadFLoans, id, userId, itemId, action,
 			statusName, loanDate, dueDate, id)
 		return err
 	} else {
-		_, err := exec(tx, opts, sqlUpdateLoansEmpty, id)
+		_, err := exec(tx, opts, sqlLoadLoansEmpty, id)
 		return err
 	}
 }
 
-var sqlUpdateLoans string = trimSql("" +
+var sqlLoadLoans string = trimSql("" +
 	"  INSERT INTO loans AS l                                      \n" +
 	"      (id, user_id, item_id, action, status_name, loan_date,  \n" +
 	"              due_date)                                       \n" +
@@ -59,7 +59,7 @@ var sqlUpdateLoans string = trimSql("" +
 	"            l.loan_date <> EXCLUDED.loan_date OR              \n" +
 	"            l.due_date <> EXCLUDED.due_date;                  \n")
 
-var sqlUpdateFLoans string = trimSql("" +
+var sqlLoadFLoans string = trimSql("" +
 	"  INSERT INTO f_loans AS l                                       \n" +
 	"      (id, user_id, location_id, item_id, action, status_name,   \n" +
 	"              loan_date, due_date)                               \n" +
@@ -89,7 +89,7 @@ var sqlUpdateFLoans string = trimSql("" +
 	"            l.loan_date <> EXCLUDED.loan_date OR                 \n" +
 	"            l.due_date <> EXCLUDED.due_date;                     \n")
 
-var sqlUpdateLoansEmpty string = trimSql("" +
+var sqlLoadLoansEmpty string = trimSql("" +
 	"  INSERT INTO loans                 \n" +
 	"      (id)                          \n" +
 	"      VALUES ($1)                   \n" +

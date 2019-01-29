@@ -1,3 +1,5 @@
+START TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
 -- Extension for crosstab() requires superuser to install:
 -- CREATE EXTENSION IF NOT EXISTS tablefunc;
 
@@ -15,7 +17,7 @@ CREATE TABLE groups (
     description  TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
 );
 
-INSERT INTO groups (id) VALUES ('00000000-0000-0000-0000-000000000000');
+-- INSERT INTO groups (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 CREATE SEQUENCE na_users;
 
@@ -32,7 +34,7 @@ CREATE TABLE users (
             DEFAULT '00000000-0000-0000-0000-000000000000'
 );
 
-INSERT INTO users (id) VALUES ('00000000-0000-0000-0000-000000000000');
+-- INSERT INTO users (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 CREATE TABLE loans (
     id           UUID NOT NULL PRIMARY KEY,
@@ -48,7 +50,7 @@ CREATE TABLE loans (
 
 CREATE INDEX ON loans (loan_date);
 
-INSERT INTO loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
+-- INSERT INTO loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 CREATE SEQUENCE na_tmp_loans_locations;
 
@@ -60,8 +62,8 @@ CREATE TABLE tmp_loans_locations (
         CHECK (location_name <> '')
 );
 
-INSERT INTO tmp_loans_locations (loan_id)
-    VALUES ('00000000-0000-0000-0000-000000000000');
+-- INSERT INTO tmp_loans_locations (loan_id)
+    -- VALUES ('00000000-0000-0000-0000-000000000000');
 
 -------------------------------------------------------------------------------
 -- STAR SCHEMAS ---------------------------------------------------------------
@@ -83,7 +85,7 @@ CREATE TABLE d_users (
     group_description  TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
 );
 
-INSERT INTO d_users (id) VALUES ('00000000-0000-0000-0000-000000000000');
+-- INSERT INTO d_users (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 /*
 CREATE VIEW d_users AS
@@ -107,7 +109,7 @@ CREATE TABLE d_locations (
 	        ']'
 );
 
-INSERT INTO d_locations (id) VALUES ('00000000-0000-0000-0000-000000000000');
+-- INSERT INTO d_locations (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 /*
 CREATE VIEW d_locations AS
@@ -134,7 +136,7 @@ CREATE TABLE f_loans (
 
 CREATE INDEX ON f_loans (loan_date);
 
-INSERT INTO f_loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
+-- INSERT INTO f_loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 /*
 CREATE VIEW f_loans AS
@@ -150,4 +152,6 @@ SELECT l.id,
         LEFT JOIN tmp_loans_locations tll ON l.id = tll.loan_id;
 
 */
+
+COMMIT;
 

@@ -18,7 +18,7 @@ func main() {
 		"database selected from configuration file")
 	debugFlag := flag.Bool("debug", false, "enable debugging output")
 	flag.Parse()
-	opts := &ldpadmin.UpdateOptions{
+	opts := &ldpadmin.LoadOptions{
 		Debug: *debugFlag,
 	}
 
@@ -30,7 +30,7 @@ func main() {
 
 	extractDir := config.Get("extract", "dir")
 
-	fmt.Printf("-- Starting update to database '%s'\n", *dbFlag)
+	fmt.Printf("-- Starting load to database '%s'\n", *dbFlag)
 
 	pgdb, err := ldputil.OpenDatabase(
 		config.Get(*dbFlag, "host"),
@@ -54,20 +54,20 @@ func main() {
 	}
 	defer tx.Rollback()
 
-	err = updateAll("groups", extractDir+"/groups.json", tx, opts)
+	err = loadAll("groups", extractDir+"/groups.json", tx, opts)
 	if err != nil {
 		ldputil.PrintError(err)
 		return
 	}
 
-	err = updateAll("users", extractDir+"/users.json", tx, opts)
+	err = loadAll("users", extractDir+"/users.json", tx, opts)
 	if err != nil {
 		ldputil.PrintError(err)
 		return
 	}
 
-	for x := 1; x <= 20; x++ {
-		err = updateAll("tmp_loans_locations",
+	for x := 1; x <= 2; x++ {
+		err = loadAll("tmp_loans_locations",
 			extractDir+fmt.Sprintf("/circulation.loans.json.%v",
 				x),
 			tx, opts)
@@ -77,8 +77,8 @@ func main() {
 		}
 	}
 
-	for x := 1; x <= 20; x++ {
-		err = updateAll("loans",
+	for x := 1; x <= 2; x++ {
+		err = loadAll("loans",
 			extractDir+fmt.Sprintf("/loan-storage.loans.json.%v",
 				x),
 			tx, opts)
@@ -94,12 +94,12 @@ func main() {
 		return
 	}
 
-	fmt.Printf("-- Updates committed to database '%s'\n", *dbFlag)
+	fmt.Printf("-- Load complete and committed to database '%s'\n", *dbFlag)
 }
 
-func updateAll(jtype string, filename string, tx *sql.Tx,
-	opts *ldpadmin.UpdateOptions) error {
-	fmt.Printf("-- Updating from %s\n", filename)
+func loadAll(jtype string, filename string, tx *sql.Tx,
+	opts *ldpadmin.LoadOptions) error {
+	fmt.Printf("-- Loading from %s\n", filename)
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -117,7 +117,7 @@ func updateAll(jtype string, filename string, tx *sql.Tx,
 		}
 	}
 
-	// Read and update array elements.
+	// Read and load array elements.
 	for dec.More() {
 
 		var i interface{}
@@ -126,7 +126,7 @@ func updateAll(jtype string, filename string, tx *sql.Tx,
 			return err
 		}
 
-		err = ldpadmin.Update(jtype, i.(map[string]interface{}), tx,
+		err = ldpadmin.Load(jtype, i.(map[string]interface{}), tx,
 			opts)
 		if err != nil {
 			return err

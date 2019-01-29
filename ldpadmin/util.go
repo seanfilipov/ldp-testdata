@@ -21,7 +21,7 @@ func trimSql(s string) string {
 	return b.String()
 }
 
-func exec(tx *sql.Tx, opts *UpdateOptions, query string,
+func exec(tx *sql.Tx, opts *LoadOptions, query string,
 	args ...interface{}) (sql.Result, error) {
 	if opts.Debug {
 		var q string = query

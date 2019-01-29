@@ -5,24 +5,24 @@ import (
 	"fmt"
 )
 
-func Update(jsonType string, json map[string]interface{}, tx *sql.Tx,
-	opts *UpdateOptions) error {
+func Load(jsonType string, json map[string]interface{}, tx *sql.Tx,
+	opts *LoadOptions) error {
 	id := json["id"].(string)
 	switch jsonType {
 	case "groups":
-		return updateGroups(id, json, tx, opts)
+		return loadGroups(id, json, tx, opts)
 	case "users":
-		return updateUsers(id, json, tx, opts)
+		return loadUsers(id, json, tx, opts)
 	case "loans":
-		return updateLoans(id, json, tx, opts)
+		return loadLoans(id, json, tx, opts)
 	case "tmp_loans_locations":
-		return updateTmpLoansLocs(id, json, tx, opts)
+		return loadTmpLoansLocs(id, json, tx, opts)
 	default:
 		return fmt.Errorf("unknown type \"%v\"", jsonType)
 	}
 }
 
-type UpdateOptions struct {
+type LoadOptions struct {
 	// Debug enables debugging output if set to true.
 	Debug bool
 }
