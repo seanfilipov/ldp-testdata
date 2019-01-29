@@ -2,17 +2,31 @@ package ldpadmin
 
 import (
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"time"
+
+	"github.com/lib/pq"
 )
 
-func loadLoans(id string, json map[string]interface{}, tx *sql.Tx,
+func loadLoansNEW(dec *json.Decoder, tx *sql.Tx,
 	opts *LoadOptions) error {
-	if json != nil {
-		userId := json["userId"].(string)
-		err := loadUsers(userId, nil, tx, opts)
+	fmt.Println("-- COPY")
+	stmt, err := tx.Prepare(pq.CopyInSchema("load", "loans",
+		"id", "user_id", "item_id", "action", "status_name",
+		"loan_date", "due_date"))
+	if err != nil {
+		return err
+	}
+	for dec.More() {
+		var i interface{}
+		err := dec.Decode(&i)
 		if err != nil {
 			return err
 		}
+		json := i.(map[string]interface{})
+		id := json["id"].(string)
+		userId := json["userId"].(string)
 		itemId := json["itemId"].(string)
 		action := json["action"].(string)
 		status := json["status"].(map[string]interface{})
@@ -22,16 +36,54 @@ func loadLoans(id string, json map[string]interface{}, tx *sql.Tx,
 		layout := "2006-01-02T15:04:05Z"
 		loanDate, _ := time.Parse(layout, loanDateStr)
 		dueDate, _ := time.Parse(layout, dueDateStr)
-		_, err = exec(tx, opts, sqlLoadLoans, id, userId, itemId,
-			action, statusName, loanDate, dueDate)
-		// f_loans
-		_, err = exec(tx, opts, sqlLoadFLoans, id, userId, itemId, action,
-			statusName, loanDate, dueDate, id)
-		return err
-	} else {
-		_, err := exec(tx, opts, sqlLoadLoansEmpty, id)
+		_, err = stmt.Exec(id, userId, itemId, action, statusName,
+			loanDate, dueDate)
+	}
+	_, err = stmt.Exec()
+	if err != nil {
 		return err
 	}
+	err = stmt.Close()
+	if err != nil {
+		return err
+	}
+	fmt.Println("-- INSERT users")
+	_, err = tx.Exec("" +
+		"INSERT INTO users (id) SELECT user_id AS id FROM load.loans " +
+		"ON CONFLICT (id) DO NOTHING;")
+	if err != nil {
+		return err
+	}
+	fmt.Println("-- INSERT loans")
+	_, err = tx.Exec("" +
+		"INSERT INTO loans AS l (id, user_id, item_id, action, status_name, " +
+		"loan_date, due_date) " +
+		"SELECT id, user_id, item_id, action, status_name, loan_date, " +
+		"due_date " +
+		"FROM load.loans " +
+		"ON CONFLICT (id) DO UPDATE SET " +
+		"user_id = EXCLUDED.user_id, " +
+		"item_id = EXCLUDED.item_id, " +
+		"action = EXCLUDED.action, " +
+		"status_name = EXCLUDED.status_name, " +
+		"loan_date = EXCLUDED.loan_date, " +
+		"due_date = EXCLUDED.due_date " +
+		"      WHERE l.user_id <> EXCLUDED.user_id OR                  \n" +
+		"            l.item_id <> EXCLUDED.item_id OR                  \n" +
+		"            l.action <> EXCLUDED.action OR                    \n" +
+		"            l.status_name <> EXCLUDED.status_name OR          \n" +
+		"            l.loan_date <> EXCLUDED.loan_date OR              \n" +
+		"            l.due_date <> EXCLUDED.due_date;                  \n")
+	if err != nil {
+		return err
+	}
+	fmt.Println("-- TRUNCATE")
+	_, err = tx.Exec("" +
+		"TRUNCATE load.loans;")
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 var sqlLoadLoans string = trimSql("" +

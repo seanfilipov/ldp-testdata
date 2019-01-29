@@ -2,8 +2,19 @@ package ldpadmin
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 )
+
+func LoadNEW(jsonType string, dec *json.Decoder, tx *sql.Tx,
+	opts *LoadOptions) error {
+	switch jsonType {
+	case "loans":
+		return loadLoansNEW(dec, tx, opts)
+	default:
+		return fmt.Errorf("unknown type \"%v\"", jsonType)
+	}
+}
 
 func Load(jsonType string, json map[string]interface{}, tx *sql.Tx,
 	opts *LoadOptions) error {
@@ -13,8 +24,8 @@ func Load(jsonType string, json map[string]interface{}, tx *sql.Tx,
 		return loadGroups(id, json, tx, opts)
 	case "users":
 		return loadUsers(id, json, tx, opts)
-	case "loans":
-		return loadLoans(id, json, tx, opts)
+	//case "loans":
+	//return loadLoans(id, json, tx, opts)
 	case "tmp_loans_locations":
 		return loadTmpLoansLocs(id, json, tx, opts)
 	default:

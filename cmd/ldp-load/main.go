@@ -14,7 +14,7 @@ import (
 
 func main() {
 	configFlag := flag.String("config", "", "configuration file")
-	dbFlag := flag.String("db", "ldp-database",
+	dbFlag := flag.String("db", "default-database",
 		"database selected from configuration file")
 	debugFlag := flag.Bool("debug", false, "enable debugging output")
 	flag.Parse()
@@ -54,30 +54,32 @@ func main() {
 	}
 	defer tx.Rollback()
 
-	err = loadAll("groups", extractDir+"/groups.json", tx, opts)
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-
-	err = loadAll("users", extractDir+"/users.json", tx, opts)
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
-
-	for x := 1; x <= 2; x++ {
-		err = loadAll("tmp_loans_locations",
-			extractDir+fmt.Sprintf("/circulation.loans.json.%v",
-				x),
-			tx, opts)
+	/*
+		err = loadAll("groups", extractDir+"/groups.json", tx, opts)
 		if err != nil {
 			ldputil.PrintError(err)
 			return
 		}
-	}
 
-	for x := 1; x <= 2; x++ {
+		err = loadAll("users", extractDir+"/users.json", tx, opts)
+		if err != nil {
+			ldputil.PrintError(err)
+			return
+		}
+
+		for x := 1; x <= 2; x++ {
+			err = loadAll("tmp_loans_locations",
+				extractDir+fmt.Sprintf("/circulation.loans.json.%v",
+					x),
+				tx, opts)
+			if err != nil {
+				ldputil.PrintError(err)
+				return
+			}
+		}
+	*/
+
+	for x := 1; x <= 20; x++ {
 		err = loadAll("loans",
 			extractDir+fmt.Sprintf("/loan-storage.loans.json.%v",
 				x),
@@ -115,6 +117,14 @@ func loadAll(jtype string, filename string, tx *sql.Tx,
 		if err != nil {
 			return err
 		}
+	}
+
+	if jtype == "loans" {
+		err = ldpadmin.LoadNEW(jtype, dec, tx, opts)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// Read and load array elements.

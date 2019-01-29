@@ -17,7 +17,7 @@ CREATE TABLE groups (
     description  TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
 );
 
--- INSERT INTO groups (id) VALUES ('00000000-0000-0000-0000-000000000000');
+INSERT INTO groups (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 CREATE SEQUENCE na_users;
 
@@ -49,6 +49,20 @@ CREATE TABLE loans (
 );
 
 CREATE INDEX ON loans (loan_date);
+
+-- COPY TEST ---------------------
+CREATE SCHEMA load;
+CREATE TABLE load.loans (
+    id           UUID,
+    user_id      UUID,
+    item_id      UUID,
+    action       TEXT,
+    status_name  TEXT,
+    loan_date    TIMESTAMP,
+    due_date     TIMESTAMP
+);
+
+----------------------------------
 
 -- INSERT INTO loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
