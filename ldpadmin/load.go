@@ -6,17 +6,17 @@ import (
 	"fmt"
 )
 
-func LoadNEW(jsonType string, dec *json.Decoder, tx *sql.Tx,
+func Load(jsonType string, dec *json.Decoder, tx *sql.Tx,
 	opts *LoadOptions) error {
 	switch jsonType {
 	case "loans":
-		return loadLoansNEW(dec, tx, opts)
+		return loadLoans(dec, tx, opts)
 	default:
 		return fmt.Errorf("unknown type \"%v\"", jsonType)
 	}
 }
 
-func Load(jsonType string, json map[string]interface{}, tx *sql.Tx,
+func LoadOLD(jsonType string, json map[string]interface{}, tx *sql.Tx,
 	opts *LoadOptions) error {
 	id := json["id"].(string)
 	switch jsonType {

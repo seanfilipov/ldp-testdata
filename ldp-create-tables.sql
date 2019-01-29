@@ -7,6 +7,8 @@ START TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 -- NORMALIZED SCHEMA ----------------------------------------------------------
 -------------------------------------------------------------------------------
 
+CREATE SCHEMA load;
+
 CREATE SEQUENCE na_groups;
 
 CREATE TABLE groups (
@@ -49,20 +51,6 @@ CREATE TABLE loans (
 );
 
 CREATE INDEX ON loans (loan_date);
-
--- COPY TEST ---------------------
-CREATE SCHEMA load;
-CREATE TABLE load.loans (
-    id           UUID,
-    user_id      UUID,
-    item_id      UUID,
-    action       TEXT,
-    status_name  TEXT,
-    loan_date    TIMESTAMP,
-    due_date     TIMESTAMP
-);
-
-----------------------------------
 
 -- INSERT INTO loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
@@ -151,6 +139,17 @@ CREATE TABLE f_loans (
 CREATE INDEX ON f_loans (loan_date);
 
 -- INSERT INTO f_loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
+
+CREATE TABLE load.f_loans (
+    id           UUID,
+    user_id      UUID,
+    location_id  TEXT,
+    item_id      UUID,
+    action       TEXT,
+    status_name  TEXT,
+    loan_date    TIMESTAMP,
+    due_date     TIMESTAMP
+);
 
 /*
 CREATE VIEW f_loans AS

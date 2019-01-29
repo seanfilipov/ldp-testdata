@@ -120,7 +120,7 @@ func loadAll(jtype string, filename string, tx *sql.Tx,
 	}
 
 	if jtype == "loans" {
-		err = ldpadmin.LoadNEW(jtype, dec, tx, opts)
+		err = ldpadmin.Load(jtype, dec, tx, opts)
 		if err != nil {
 			return err
 		}
@@ -136,7 +136,7 @@ func loadAll(jtype string, filename string, tx *sql.Tx,
 			return err
 		}
 
-		err = ldpadmin.Load(jtype, i.(map[string]interface{}), tx,
+		err = ldpadmin.LoadOLD(jtype, i.(map[string]interface{}), tx,
 			opts)
 		if err != nil {
 			return err
