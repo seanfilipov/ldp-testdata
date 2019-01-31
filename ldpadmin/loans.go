@@ -1,17 +1,18 @@
 package ldpadmin
 
 import (
-	"database/sql"
 	"encoding/json"
 	"time"
-
-	"github.com/lib/pq"
 )
 
-func loadLoans(dec *json.Decoder, tx *sql.Tx, opts *LoadOptions) error {
-	stmt, err := tx.Prepare(pq.CopyInSchema("load", "f_loans",
+func (l *Loader) loadLoans(dec *json.Decoder) error {
+	err := l.sqlTruncateStage("f_loans")
+	if err != nil {
+		return err
+	}
+	stmt, err := l.sqlCopyStage("f_loans",
 		"id", "user_id", "location_id", "item_id", "action",
-		"status_name", "loan_date", "due_date"))
+		"status_name", "loan_date", "due_date")
 	if err != nil {
 		return err
 	}
@@ -33,10 +34,10 @@ func loadLoans(dec *json.Decoder, tx *sql.Tx, opts *LoadOptions) error {
 		layout := "2006-01-02T15:04:05Z"
 		loanDate, _ := time.Parse(layout, loanDateStr)
 		dueDate, _ := time.Parse(layout, dueDateStr)
-		_, err = stmt.Exec(id, userId, "", itemId, action, statusName,
-			loanDate, dueDate)
+		_, err = l.sqlCopyExec(stmt, id, userId, "", itemId, action,
+			statusName, loanDate, dueDate)
 	}
-	_, err = stmt.Exec()
+	_, err = l.sqlCopyExec(stmt)
 	if err != nil {
 		return err
 	}
@@ -44,16 +45,11 @@ func loadLoans(dec *json.Decoder, tx *sql.Tx, opts *LoadOptions) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec("" +
-		"INSERT INTO d_users\n" +
-		"    (id)\n" +
-		"    SELECT user_id AS id\n" +
-		"        FROM load.f_loans\n" +
-		"    ON CONFLICT (id) DO NOTHING;\n")
+	err = l.sqlMergePlaceholders("d_users", "f_loans", "user_id")
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec("" +
+	_, err = l.sqlExec("" +
 		"INSERT INTO f_loans AS fl\n" +
 		"    (id, user_id, location_id, item_id, action,\n" +
 		"            status_name, loan_date, due_date)\n" +
@@ -66,8 +62,8 @@ func loadLoans(dec *json.Decoder, tx *sql.Tx, opts *LoadOptions) error {
 		"           lfl.status_name,\n" +
 		"           lfl.loan_date,\n" +
 		"           lfl.due_date\n" +
-		"        FROM load.f_loans AS lfl\n" +
-		"            LEFT JOIN tmp_loans_locations AS tll\n" +
+		"        FROM stage.f_loans AS lfl\n" +
+		"            LEFT JOIN norm.tmp_loans_locations AS tll\n" +
 		"                ON lfl.id = tll.loan_id\n" +
 		"    ON CONFLICT (id) DO UPDATE\n" +
 		"    SET user_id = EXCLUDED.user_id,\n" +
@@ -87,8 +83,7 @@ func loadLoans(dec *json.Decoder, tx *sql.Tx, opts *LoadOptions) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec("" +
-		"TRUNCATE load.f_loans;")
+	err = l.sqlTruncateStage("f_loans")
 	if err != nil {
 		return err
 	}

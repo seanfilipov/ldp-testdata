@@ -7,40 +7,36 @@ START TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 -- NORMALIZED SCHEMA ----------------------------------------------------------
 -------------------------------------------------------------------------------
 
-CREATE SCHEMA load;
+CREATE SCHEMA norm;
+CREATE SCHEMA stage;
 
-CREATE SEQUENCE na_groups;
+CREATE TABLE stage.lock ();
 
-CREATE TABLE groups (
+CREATE TABLE norm.groups (
     id           UUID NOT NULL PRIMARY KEY,
-    group_name   TEXT NOT NULL UNIQUE
-            DEFAULT 'NOT AVAILABLE [' || nextval('na_groups') || ']',
+    group_name   TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
 	CHECK (group_name <> ''),
     description  TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
 );
 
-INSERT INTO groups (id) VALUES ('00000000-0000-0000-0000-000000000000');
+INSERT INTO norm.groups (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
-CREATE SEQUENCE na_users;
-
-CREATE TABLE users (
+CREATE TABLE norm.users (
     id               UUID NOT NULL PRIMARY KEY,
-    -- username         TEXT NOT NULL UNIQUE,
-    username         TEXT NOT NULL  -- TODO fix test data
-            DEFAULT 'NOT AVAILABLE [' || nextval('na_users') || ']',
+    username         TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
         CHECK (username <> ''),
     barcode          TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
     user_type        TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
     active           BOOLEAN NOT NULL DEFAULT FALSE,
-    patron_group_id  UUID NOT NULL REFERENCES groups (id)
+    patron_group_id  UUID NOT NULL REFERENCES norm.groups (id)
             DEFAULT '00000000-0000-0000-0000-000000000000'
 );
 
--- INSERT INTO users (id) VALUES ('00000000-0000-0000-0000-000000000000');
+INSERT INTO norm.users (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
-CREATE TABLE loans (
+CREATE TABLE norm.loans (
     id           UUID NOT NULL PRIMARY KEY,
-    user_id      UUID NOT NULL REFERENCES users (id)
+    user_id      UUID NOT NULL REFERENCES norm.users (id)
             DEFAULT '00000000-0000-0000-0000-000000000000',
     item_id      UUID NOT NULL
             DEFAULT '00000000-0000-0000-0000-000000000000',
@@ -50,17 +46,13 @@ CREATE TABLE loans (
     due_date     TIMESTAMP NOT NULL DEFAULT 'epoch'
 );
 
-CREATE INDEX ON loans (loan_date);
+-- CREATE INDEX ON loans (loan_date);
 
 -- INSERT INTO loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
-CREATE SEQUENCE na_tmp_loans_locations;
-
-CREATE TABLE tmp_loans_locations (
+CREATE TABLE norm.tmp_loans_locations (
     loan_id        UUID NOT NULL PRIMARY KEY,
-    location_name  TEXT NOT NULL
-            DEFAULT 'NOT AVAILABLE [' || nextval('na_tmp_loans_locations') ||
-	        ']',
+    location_name  TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
         CHECK (location_name <> '')
 );
 
@@ -71,13 +63,10 @@ CREATE TABLE tmp_loans_locations (
 -- STAR SCHEMAS ---------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-CREATE SEQUENCE na_d_users;
-
 CREATE TABLE d_users (
     id                 UUID NOT NULL PRIMARY KEY,
     -- username         TEXT NOT NULL UNIQUE,
-    username           TEXT NOT NULL  -- TODO fix test data
-            DEFAULT 'NOT AVAILABLE [' || nextval('na_d_users') || ']',
+    username           TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
         CHECK (username <> ''),
     barcode            TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
     user_type          TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
@@ -102,13 +91,9 @@ SELECT u.id,
         LEFT JOIN groups g ON u.patron_group_id = g.id;
 */
 
-CREATE SEQUENCE na_d_locations;
-
 CREATE TABLE d_locations (
     id             TEXT NOT NULL PRIMARY KEY,
-    location_name  TEXT NOT NULL UNIQUE
-            DEFAULT 'NOT AVAILABLE [' || nextval('na_d_locations') ||
-	        ']'
+    location_name  TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
 );
 
 -- INSERT INTO d_locations (id) VALUES ('00000000-0000-0000-0000-000000000000');
@@ -140,7 +125,7 @@ CREATE INDEX ON f_loans (loan_date);
 
 -- INSERT INTO f_loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
-CREATE TABLE load.f_loans (
+CREATE TABLE stage.f_loans (
     id           UUID,
     user_id      UUID,
     location_id  TEXT,
@@ -165,6 +150,8 @@ SELECT l.id,
         LEFT JOIN tmp_loans_locations tll ON l.id = tll.loan_id;
 
 */
+
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO ldp;
 
 COMMIT;
 

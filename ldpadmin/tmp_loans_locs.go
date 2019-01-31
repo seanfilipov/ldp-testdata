@@ -1,9 +1,6 @@
 package ldpadmin
 
-import (
-	"database/sql"
-)
-
+/*
 func loadTmpLoansLocs(id string, json map[string]interface{},
 	tx *sql.Tx, opts *LoadOptions) error {
 	if json != nil {
@@ -47,3 +44,4 @@ var sqlLoadTmpLoansLocsEmpty string = trimSql("" +
 	"      (loan_id)                          \n" +
 	"      VALUES ($1)                        \n" +
 	"      ON CONFLICT (loan_id) DO NOTHING;  \n")
+*/

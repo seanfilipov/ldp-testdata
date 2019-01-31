@@ -1,8 +1,6 @@
 package main
 
 import (
-	"context"
-	"database/sql"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -18,7 +16,7 @@ func main() {
 		"database selected from configuration file")
 	debugFlag := flag.Bool("debug", false, "enable debugging output")
 	flag.Parse()
-	opts := &ldpadmin.LoadOptions{
+	opts := &ldpadmin.LoaderOptions{
 		Debug: *debugFlag,
 	}
 
@@ -30,9 +28,7 @@ func main() {
 
 	extractDir := config.Get("extract", "dir")
 
-	fmt.Printf("-- Starting load to database '%s'\n", *dbFlag)
-
-	pgdb, err := ldputil.OpenDatabase(
+	db, err := ldputil.OpenDatabase(
 		config.Get(*dbFlag, "host"),
 		config.Get(*dbFlag, "port"),
 		config.Get(*dbFlag, "user"),
@@ -42,17 +38,15 @@ func main() {
 		ldputil.PrintError(err)
 		return
 	}
-	defer pgdb.Close()
+	defer db.Close()
 
-	tx, err := pgdb.BeginTx(context.TODO(), &sql.TxOptions{
-		Isolation: sql.LevelSerializable,
-		ReadOnly:  false,
-	})
+	ld, err := ldpadmin.NewLoader(db, opts)
 	if err != nil {
 		ldputil.PrintError(err)
 		return
 	}
-	defer tx.Rollback()
+
+	fmt.Printf("-- Starting load to database '%s'\n", *dbFlag)
 
 	/*
 		err = loadAll("groups", extractDir+"/groups.json", tx, opts)
@@ -80,27 +74,22 @@ func main() {
 	*/
 
 	for x := 1; x <= 20; x++ {
-		err = loadAll("loans",
+		err = loadFile("loans",
 			extractDir+fmt.Sprintf("/loan-storage.loans.json.%v",
 				x),
-			tx, opts)
+			ld)
 		if err != nil {
 			ldputil.PrintError(err)
 			return
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		ldputil.PrintError(err)
-		return
-	}
+	ld.Close()
 
-	fmt.Printf("-- Load complete and committed to database '%s'\n", *dbFlag)
+	fmt.Printf("-- Load complete in database '%s'\n", *dbFlag)
 }
 
-func loadAll(jtype string, filename string, tx *sql.Tx,
-	opts *ldpadmin.LoadOptions) error {
+func loadFile(jtype string, filename string, ld *ldpadmin.Loader) error {
 	fmt.Printf("-- Loading from %s\n", filename)
 
 	file, err := os.Open(filename)
@@ -120,28 +109,30 @@ func loadAll(jtype string, filename string, tx *sql.Tx,
 	}
 
 	if jtype == "loans" {
-		err = ldpadmin.Load(jtype, dec, tx, opts)
+		err = ld.Load(jtype, dec)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	// Read and load array elements.
-	for dec.More() {
+	/*
+		// Read and load array elements.
+		for dec.More() {
 
-		var i interface{}
-		err := dec.Decode(&i)
-		if err != nil {
-			return err
-		}
+			var i interface{}
+			err := dec.Decode(&i)
+			if err != nil {
+				return err
+			}
 
-		err = ldpadmin.LoadOLD(jtype, i.(map[string]interface{}), tx,
-			opts)
-		if err != nil {
-			return err
+			err = ldpadmin.LoadOLD(jtype, i.(map[string]interface{}), tx,
+				opts)
+			if err != nil {
+				return err
+			}
 		}
-	}
+	*/
 
 	return nil
 }

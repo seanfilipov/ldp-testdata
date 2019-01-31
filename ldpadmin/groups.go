@@ -1,9 +1,6 @@
 package ldpadmin
 
-import (
-	"database/sql"
-)
-
+/*
 func loadGroups(id string, json map[string]interface{}, tx *sql.Tx,
 	opts *LoadOptions) error {
 	if json != nil {
@@ -35,3 +32,4 @@ var sqlLoadGroupsEmpty string = trimSql("" +
 	"      (id)                          \n" +
 	"      VALUES ($1)                   \n" +
 	"      ON CONFLICT (id) DO NOTHING;  \n")
+*/

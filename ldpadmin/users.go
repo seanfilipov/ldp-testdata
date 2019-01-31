@@ -1,9 +1,6 @@
 package ldpadmin
 
-import (
-	"database/sql"
-)
-
+/*
 func loadUsers(id string, json map[string]interface{}, tx *sql.Tx,
 	opts *LoadOptions) error {
 	if json != nil {
@@ -82,3 +79,4 @@ var sqlLoadUsersEmpty string = trimSql("" +
 	"      (id)                          \n" +
 	"      VALUES ($1)                   \n" +
 	"      ON CONFLICT (id) DO NOTHING;  \n")
+*/
