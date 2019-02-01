@@ -77,14 +77,14 @@ func (l *Loader) sqlExec(query string,
 }
 
 func (l *Loader) sqlMergePlaceholders(
-	targetTable, stagingTable, stagingId string) error {
+	targetTable, targetId, stagingTable, stagingId string) error {
 	cmd := fmt.Sprintf(""+
 		"INSERT INTO %s\n"+
-		"    (id)\n"+
-		"    SELECT %s AS id\n"+
+		"    (%s)\n"+
+		"    SELECT %s\n"+
 		"        FROM stage.%s\n"+
-		"    ON CONFLICT (id) DO NOTHING;\n",
-		targetTable, stagingId, stagingTable)
+		"    ON CONFLICT (%s) DO NOTHING;\n",
+		targetTable, targetId, stagingId, stagingTable, targetId)
 	_, err := l.sqlExec(cmd)
 	if err != nil {
 		return err

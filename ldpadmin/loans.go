@@ -6,12 +6,12 @@ import (
 )
 
 func (l *Loader) loadLoans(dec *json.Decoder) error {
-	err := l.sqlTruncateStage("f_loans")
+	err := l.sqlTruncateStage("loans")
 	if err != nil {
 		return err
 	}
-	stmt, err := l.sqlCopyStage("f_loans",
-		"id", "user_id", "location_id", "item_id", "action",
+	stmt, err := l.sqlCopyStage("loans",
+		"loan_id", "user_id", "location_id", "item_id", "action",
 		"status_name", "loan_date", "due_date")
 	if err != nil {
 		return err
@@ -23,7 +23,7 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 			return err
 		}
 		json := i.(map[string]interface{})
-		id := json["id"].(string)
+		loanId := json["id"].(string)
 		userId := json["userId"].(string)
 		itemId := json["itemId"].(string)
 		action := json["action"].(string)
@@ -34,7 +34,7 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 		layout := "2006-01-02T15:04:05Z"
 		loanDate, _ := time.Parse(layout, loanDateStr)
 		dueDate, _ := time.Parse(layout, dueDateStr)
-		_, err = l.sqlCopyExec(stmt, id, userId, "", itemId, action,
+		_, err = l.sqlCopyExec(stmt, loanId, userId, "", itemId, action,
 			statusName, loanDate, dueDate)
 	}
 	_, err = l.sqlCopyExec(stmt)
@@ -45,45 +45,60 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 	if err != nil {
 		return err
 	}
-	err = l.sqlMergePlaceholders("d_users", "f_loans", "user_id")
+	//err = l.sqlMergePlaceholders("users", "user_id", "loans", "user_id")
+	_, err = l.sqlExec("" +
+		"INSERT INTO users\n" +
+		"    (user_id)\n" +
+		"    SELECT DISTINCT sl.user_id\n" +
+		"        FROM stage.loans AS sl\n" +
+		"            LEFT JOIN users AS u2\n" +
+		"                ON sl.user_id = u2.user_id\n" +
+		"        WHERE u2.user_id IS NULL;\n")
+	//"    ON CONFLICT (user_id, username, barcode, user_type,\n" +
+	//"                 active, group_name, group_description)\n" +
+	//"            DO NOTHING;\n")
 	if err != nil {
 		return err
 	}
 	_, err = l.sqlExec("" +
-		"INSERT INTO f_loans AS fl\n" +
-		"    (id, user_id, location_id, item_id, action,\n" +
+		"INSERT INTO loans AS l\n" +
+		"    (loan_id, user_key, location_id, item_id, action,\n" +
 		"            status_name, loan_date, due_date)\n" +
-		"    SELECT lfl.id,\n" +
-		"           lfl.user_id,\n" +
+		"    SELECT sl.loan_id,\n" +
+		"           ( SELECT u.user_key\n" +
+		"                 FROM users AS u\n" +
+		"                 WHERE sl.user_id = u.user_id\n" +
+		"                 ORDER BY t DESC LIMIT 1\n" +
+		"           ),\n" +
 		"           'id-' || replace(lower(tll.location_name), ' ',\n" +
 		"                   '-') AS location_id,\n" +
-		"           lfl.item_id,\n" +
-		"           lfl.action,\n" +
-		"           lfl.status_name,\n" +
-		"           lfl.loan_date,\n" +
-		"           lfl.due_date\n" +
-		"        FROM stage.f_loans AS lfl\n" +
+		"           sl.item_id,\n" +
+		"           sl.action,\n" +
+		"           sl.status_name,\n" +
+		"           sl.loan_date,\n" +
+		"           sl.due_date\n" +
+		"        FROM stage.loans AS sl\n" +
 		"            LEFT JOIN norm.tmp_loans_locations AS tll\n" +
-		"                ON lfl.id = tll.loan_id\n" +
-		"    ON CONFLICT (id) DO UPDATE\n" +
-		"    SET user_id = EXCLUDED.user_id,\n" +
+		"                ON sl.loan_id = tll.loan_id\n" +
+		"    ON CONFLICT (loan_id) DO UPDATE\n" +
+		"    SET user_key = EXCLUDED.user_key,\n" +
 		"        location_id = EXCLUDED.location_id,\n" +
 		"        item_id = EXCLUDED.item_id,\n" +
 		"        action = EXCLUDED.action,\n" +
 		"        status_name = EXCLUDED.status_name,\n" +
 		"        loan_date = EXCLUDED.loan_date,\n" +
 		"        due_date = EXCLUDED.due_date\n" +
-		"    WHERE fl.user_id <> EXCLUDED.user_id OR\n" +
-		"          fl.location_id <> EXCLUDED.location_id OR\n" +
-		"          fl.item_id <> EXCLUDED.item_id OR\n" +
-		"          fl.action <> EXCLUDED.action OR\n" +
-		"          fl.status_name <> EXCLUDED.status_name OR\n" +
-		"          fl.loan_date <> EXCLUDED.loan_date OR\n" +
-		"          fl.due_date <> EXCLUDED.due_date;\n")
+		"    WHERE l.user_key <> EXCLUDED.user_key OR\n" +
+		"          l.location_id <> EXCLUDED.location_id OR\n" +
+		"          l.item_id <> EXCLUDED.item_id OR\n" +
+		"          l.action <> EXCLUDED.action OR\n" +
+		"          l.status_name <> EXCLUDED.status_name OR\n" +
+		"          l.loan_date <> EXCLUDED.loan_date OR\n" +
+		"          l.due_date <> EXCLUDED.due_date;\n")
 	if err != nil {
 		return err
 	}
-	err = l.sqlTruncateStage("f_loans")
+	err = l.sqlTruncateStage("loans")
 	if err != nil {
 		return err
 	}

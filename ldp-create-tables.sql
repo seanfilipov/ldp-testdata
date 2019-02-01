@@ -3,14 +3,16 @@ START TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 -- Extension for crosstab() requires superuser to install:
 -- CREATE EXTENSION IF NOT EXISTS tablefunc;
 
--------------------------------------------------------------------------------
--- NORMALIZED SCHEMA ----------------------------------------------------------
--------------------------------------------------------------------------------
-
 CREATE SCHEMA norm;
 CREATE SCHEMA stage;
 
 CREATE TABLE stage.lock ();
+
+-------------------------------------------------------------------------------
+-- NORMALIZED SCHEMA ----------------------------------------------------------
+-------------------------------------------------------------------------------
+
+-- norm.groups
 
 CREATE TABLE norm.groups (
     id           UUID NOT NULL PRIMARY KEY,
@@ -21,6 +23,9 @@ CREATE TABLE norm.groups (
 
 INSERT INTO norm.groups (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
+-- norm.users
+
+/*
 CREATE TABLE norm.users (
     id               UUID NOT NULL PRIMARY KEY,
     username         TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
@@ -33,7 +38,11 @@ CREATE TABLE norm.users (
 );
 
 INSERT INTO norm.users (id) VALUES ('00000000-0000-0000-0000-000000000000');
+*/
 
+-- norm.loans
+
+/*
 CREATE TABLE norm.loans (
     id           UUID NOT NULL PRIMARY KEY,
     user_id      UUID NOT NULL REFERENCES norm.users (id)
@@ -49,6 +58,9 @@ CREATE TABLE norm.loans (
 -- CREATE INDEX ON loans (loan_date);
 
 -- INSERT INTO loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
+*/
+
+-- norm.tmp_loans_locations
 
 CREATE TABLE norm.tmp_loans_locations (
     loan_id        UUID NOT NULL PRIMARY KEY,
@@ -63,9 +75,10 @@ CREATE TABLE norm.tmp_loans_locations (
 -- STAR SCHEMAS ---------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-CREATE TABLE d_users (
-    id                 UUID NOT NULL PRIMARY KEY,
-    -- username         TEXT NOT NULL UNIQUE,
+CREATE TABLE users (
+    user_key           BIGSERIAL NOT NULL PRIMARY KEY,
+        CHECK (user_key > 0),
+    user_id            UUID NOT NULL,
     username           TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
         CHECK (username <> ''),
     barcode            TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
@@ -73,13 +86,16 @@ CREATE TABLE d_users (
     active             BOOLEAN NOT NULL DEFAULT FALSE,
     group_name         TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
 	CHECK (group_name <> ''),
-    group_description  TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
+    group_description  TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
+    t                  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- INSERT INTO d_users (id) VALUES ('00000000-0000-0000-0000-000000000000');
+CREATE INDEX ON users (user_id);
+
+-- INSERT INTO users_dim (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 /*
-CREATE VIEW d_users AS
+CREATE VIEW users_dim AS
 SELECT u.id,
        u.username,
        u.barcode,
@@ -91,15 +107,15 @@ SELECT u.id,
         LEFT JOIN groups g ON u.patron_group_id = g.id;
 */
 
-CREATE TABLE d_locations (
+CREATE TABLE locations (
     id             TEXT NOT NULL PRIMARY KEY,
     location_name  TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
 );
 
--- INSERT INTO d_locations (id) VALUES ('00000000-0000-0000-0000-000000000000');
+-- INSERT INTO locations_dim (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 /*
-CREATE VIEW d_locations AS
+CREATE VIEW locations_dim AS
 SELECT 'id-' || replace(lower(tll.location_name), ' ', '-') id,
        tll.location_name
     FROM (
@@ -107,11 +123,14 @@ SELECT 'id-' || replace(lower(tll.location_name), ' ', '-') id,
     ) tll;
 */
 
-CREATE TABLE f_loans (
-    id           UUID NOT NULL PRIMARY KEY,
-    user_id      UUID NOT NULL REFERENCES d_users (id)
-            DEFAULT '00000000-0000-0000-0000-000000000000',
-    location_id  TEXT NOT NULL REFERENCES d_locations (id)
+CREATE TABLE loans (
+    loan_key     BIGSERIAL NOT NULL PRIMARY KEY,
+        CHECK (loan_key > 0),
+    loan_id      UUID NOT NULL UNIQUE,
+    -- user_id      UUID NOT NULL --REFERENCES users_dim (id)
+            -- DEFAULT '00000000-0000-0000-0000-000000000000',
+    user_key     BIGINT NOT NULL REFERENCES users (user_key),
+    location_id  TEXT NOT NULL REFERENCES locations (id)
             DEFAULT '00000000-0000-0000-0000-000000000000',
     item_id      UUID NOT NULL
             DEFAULT '00000000-0000-0000-0000-000000000000',
@@ -121,12 +140,12 @@ CREATE TABLE f_loans (
     due_date     TIMESTAMP NOT NULL DEFAULT 'epoch'
 );
 
-CREATE INDEX ON f_loans (loan_date);
+CREATE INDEX ON loans (loan_date);
 
--- INSERT INTO f_loans (id) VALUES ('00000000-0000-0000-0000-000000000000');
+-- INSERT INTO loans_fact (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
-CREATE TABLE stage.f_loans (
-    id           UUID,
+CREATE TABLE stage.loans (
+    loan_id      UUID,
     user_id      UUID,
     location_id  TEXT,
     item_id      UUID,
@@ -137,7 +156,7 @@ CREATE TABLE stage.f_loans (
 );
 
 /*
-CREATE VIEW f_loans AS
+CREATE VIEW loans_fact AS
 SELECT l.id,
        l.user_id,
        'id-' || replace(lower(tll.location_name), ' ', '-') location_id,
