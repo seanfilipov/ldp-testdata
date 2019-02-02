@@ -66,7 +66,7 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 		"           sl.status_name,\n" +
 		"           sl.loan_date,\n" +
 		"           sl.due_date\n" +
-		"        FROM stage.loans AS sl\n" +
+		"        FROM internal.loans AS sl\n" +
 		"            LEFT JOIN norm.tmp_loans_locations AS tll\n" +
 		"                ON sl.loan_id = tll.loan_id\n" +
 		"    ON CONFLICT (loan_id) DO UPDATE\n" +

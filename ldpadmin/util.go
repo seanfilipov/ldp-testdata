@@ -12,7 +12,7 @@ import (
 func (l *Loader) sqlCopyStage(stagingTable string,
 	columns ...string) (*sql.Stmt, error) {
 	if l.opts.Debug {
-		fmt.Printf("COPY %s.%s (stage.", stagingTable)
+		fmt.Printf("COPY %s.%s (internal.", stagingTable)
 		for x, c := range columns {
 			if x != 0 {
 				fmt.Printf(", ")
@@ -21,7 +21,7 @@ func (l *Loader) sqlCopyStage(stagingTable string,
 		}
 		fmt.Printf(") FROM stdin;\n")
 	}
-	stmt, err := l.tx.Prepare(pq.CopyInSchema("stage",
+	stmt, err := l.tx.Prepare(pq.CopyInSchema("internal",
 		stagingTable, columns...))
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (l *Loader) sqlMergePlaceholders(
 		"INSERT INTO %s\n"+
 		"    (%s)\n"+
 		"    SELECT DISTINCT f.%s\n"+
-		"        FROM stage.%s AS f\n"+
+		"        FROM internal.%s AS f\n"+
 		"            LEFT JOIN %s AS d\n"+
 		"                ON f.%s = d.%s\n"+
 		"        WHERE d.%s IS NULL;\n",
@@ -97,7 +97,7 @@ func (l *Loader) sqlMergePlaceholders(
 
 func (l *Loader) sqlTruncateStage(stagingTable string) error {
 	cmd := fmt.Sprintf(""+
-		"TRUNCATE stage.%s;\n",
+		"TRUNCATE internal.%s;\n",
 		stagingTable)
 	_, err := l.sqlExec(cmd)
 	if err != nil {

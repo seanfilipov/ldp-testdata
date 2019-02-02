@@ -4,9 +4,9 @@ START TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 -- CREATE EXTENSION IF NOT EXISTS tablefunc;
 
 CREATE SCHEMA norm;
-CREATE SCHEMA stage;
+CREATE SCHEMA internal;
 
-CREATE TABLE stage.lock ();
+CREATE TABLE internal.lock ();
 
 -------------------------------------------------------------------------------
 -- NORMALIZED SCHEMA ----------------------------------------------------------
@@ -144,7 +144,7 @@ CREATE INDEX ON loans (loan_date);
 
 -- INSERT INTO loans_fact (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
-CREATE TABLE stage.loans (
+CREATE TABLE internal.loans (
     loan_id      UUID,
     user_id      UUID,
     location_id  TEXT,
