@@ -45,18 +45,7 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 	if err != nil {
 		return err
 	}
-	//err = l.sqlMergePlaceholders("users", "user_id", "loans", "user_id")
-	_, err = l.sqlExec("" +
-		"INSERT INTO users\n" +
-		"    (user_id)\n" +
-		"    SELECT DISTINCT sl.user_id\n" +
-		"        FROM stage.loans AS sl\n" +
-		"            LEFT JOIN users AS u2\n" +
-		"                ON sl.user_id = u2.user_id\n" +
-		"        WHERE u2.user_id IS NULL;\n")
-	//"    ON CONFLICT (user_id, username, barcode, user_type,\n" +
-	//"                 active, group_name, group_description)\n" +
-	//"            DO NOTHING;\n")
+	err = l.sqlMergePlaceholders("users", "user_id", "loans", "user_id")
 	if err != nil {
 		return err
 	}
@@ -68,7 +57,7 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 		"           ( SELECT u.user_key\n" +
 		"                 FROM users AS u\n" +
 		"                 WHERE sl.user_id = u.user_id\n" +
-		"                 ORDER BY t DESC LIMIT 1\n" +
+		"                 ORDER BY record_time DESC LIMIT 1\n" +
 		"           ),\n" +
 		"           'id-' || replace(lower(tll.location_name), ' ',\n" +
 		"                   '-') AS location_id,\n" +

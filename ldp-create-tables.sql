@@ -87,7 +87,7 @@ CREATE TABLE users (
     group_name         TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
 	CHECK (group_name <> ''),
     group_description  TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
-    t                  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    record_time        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX ON users (user_id);

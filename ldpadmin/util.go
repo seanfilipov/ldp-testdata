@@ -77,14 +77,17 @@ func (l *Loader) sqlExec(query string,
 }
 
 func (l *Loader) sqlMergePlaceholders(
-	targetTable, targetId, stagingTable, stagingId string) error {
+	dimTable, dimId, factTable, factId string) error {
 	cmd := fmt.Sprintf(""+
 		"INSERT INTO %s\n"+
 		"    (%s)\n"+
-		"    SELECT %s\n"+
-		"        FROM stage.%s\n"+
-		"    ON CONFLICT (%s) DO NOTHING;\n",
-		targetTable, targetId, stagingId, stagingTable, targetId)
+		"    SELECT DISTINCT f.%s\n"+
+		"        FROM stage.%s AS f\n"+
+		"            LEFT JOIN %s AS d\n"+
+		"                ON f.%s = d.%s\n"+
+		"        WHERE d.%s IS NULL;\n",
+		dimTable, dimId, factId, factTable, dimTable, factId, dimId,
+		dimId)
 	_, err := l.sqlExec(cmd)
 	if err != nil {
 		return err
