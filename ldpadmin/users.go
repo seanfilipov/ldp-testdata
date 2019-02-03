@@ -1,5 +1,70 @@
 package ldpadmin
 
+import "encoding/json"
+
+func (l *Loader) loadUsers(dec *json.Decoder) error {
+	err := l.sqlTruncateStage("users")
+	if err != nil {
+		return err
+	}
+	stmt, err := l.sqlCopyStage("users",
+		"user_id", "username", "barcode", "user_type", "active",
+		"patron_group")
+	if err != nil {
+		return err
+	}
+	for dec.More() {
+		var i interface{}
+		err := dec.Decode(&i)
+		if err != nil {
+			return err
+		}
+		j := i.(map[string]interface{})
+		userId := j["id"].(string)
+		username := j["username"].(string)
+		barcode := j["barcode"].(string)
+		userType := j["type"].(string)
+		active := j["active"].(string)
+		patronGroupId := j["patronGroup"].(string)
+		/////////////////////////////////////////////
+		// This will be handled by sqlMergePlaceholders below
+		//     and is no longer needed
+		//err := loadGroups(patronGroupId, nil, tx, opts)
+		//if err != nil {
+		//        return err
+		//}
+		/////////////////////////////////////////////
+		_, err = l.sqlCopyExec(stmt, userId, username, barcode,
+			userType, active, patronGroupId)
+	}
+	_, err = l.sqlCopyExec(stmt)
+	if err != nil {
+		return err
+	}
+	err = stmt.Close()
+	if err != nil {
+		return err
+	}
+	/////////////////////////////////////////////
+	// Merge placeholders for groups
+	//err = l.sqlMergePlaceholders("users", "user_id", "loans", "user_id")
+	//if err != nil {
+	//        return err
+	//}
+	/////////////////////////////////////////////
+	//_, err = l.sqlExec("" +
+	//        "INSERT INTO loans AS l\n" +
+	/////////////////////////////////////////////
+	if err != nil {
+		return err
+	}
+	err = l.sqlTruncateStage("users")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 /*
 func loadUsers(id string, json map[string]interface{}, tx *sql.Tx,
 	opts *LoadOptions) error {

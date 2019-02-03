@@ -58,7 +58,7 @@ func NewLoader(db *sql.DB, opts *LoaderOptions) (*Loader, error) {
 	}
 	// Request lock and block until obtained
 	_, err = locktx.Exec("" +
-		"LOCK TABLE internal.lock;")
+		"LOCK TABLE loading.exlock;")
 	if err != nil {
 		return nil, err
 	}

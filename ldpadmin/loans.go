@@ -22,15 +22,15 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 		if err != nil {
 			return err
 		}
-		json := i.(map[string]interface{})
-		loanId := json["id"].(string)
-		userId := json["userId"].(string)
-		itemId := json["itemId"].(string)
-		action := json["action"].(string)
-		status := json["status"].(map[string]interface{})
+		j := i.(map[string]interface{})
+		loanId := j["id"].(string)
+		userId := j["userId"].(string)
+		itemId := j["itemId"].(string)
+		action := j["action"].(string)
+		status := j["status"].(map[string]interface{})
 		statusName := status["name"].(string)
-		loanDateStr := json["loanDate"].(string)
-		dueDateStr := json["dueDate"].(string)
+		loanDateStr := j["loanDate"].(string)
+		dueDateStr := j["dueDate"].(string)
 		layout := "2006-01-02T15:04:05Z"
 		loanDate, _ := time.Parse(layout, loanDateStr)
 		dueDate, _ := time.Parse(layout, dueDateStr)
@@ -57,7 +57,7 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 		"           ( SELECT u.user_key\n" +
 		"                 FROM users AS u\n" +
 		"                 WHERE sl.user_id = u.user_id\n" +
-		"                 ORDER BY record_time DESC LIMIT 1\n" +
+		"                 ORDER BY record_effective DESC LIMIT 1\n" +
 		"           ),\n" +
 		"           'id-' || replace(lower(tll.location_name), ' ',\n" +
 		"                   '-') AS location_id,\n" +
@@ -66,8 +66,8 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 		"           sl.status_name,\n" +
 		"           sl.loan_date,\n" +
 		"           sl.due_date\n" +
-		"        FROM internal.loans AS sl\n" +
-		"            LEFT JOIN norm.tmp_loans_locations AS tll\n" +
+		"        FROM loading.loans AS sl\n" +
+		"            LEFT JOIN normal.tmp_loans_locations AS tll\n" +
 		"                ON sl.loan_id = tll.loan_id\n" +
 		"    ON CONFLICT (loan_id) DO UPDATE\n" +
 		"    SET user_key = EXCLUDED.user_key,\n" +
