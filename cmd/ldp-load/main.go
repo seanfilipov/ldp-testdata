@@ -48,32 +48,30 @@ func main() {
 
 	fmt.Printf("-- Starting load to database '%s'\n", *dbFlag)
 
-	/*
-		err = loadAll("groups", extractDir+"/groups.json", tx, opts)
-		if err != nil {
-			ldputil.PrintError(err)
-			return
-		}
+	//err = loadAll("groups", extractDir+"/groups.json", tx, opts)
+	//if err != nil {
+	//        ldputil.PrintError(err)
+	//        return
+	//}
 
-		err = loadAll("users", extractDir+"/users.json", tx, opts)
-		if err != nil {
-			ldputil.PrintError(err)
-			return
-		}
+	err = loadFile("users", extractDir+"/users.json", ld)
+	if err != nil {
+		ldputil.PrintError(err)
+		return
+	}
 
-		for x := 1; x <= 2; x++ {
-			err = loadAll("tmp_loans_locations",
-				extractDir+fmt.Sprintf("/circulation.loans.json.%v",
-					x),
-				tx, opts)
-			if err != nil {
-				ldputil.PrintError(err)
-				return
-			}
-		}
-	*/
+	//for x := 1; x <= 2; x++ {
+	//        err = loadAll("tmp_loans_locations",
+	//                extractDir+fmt.Sprintf("/circulation.loans.json.%v",
+	//                        x),
+	//                tx, opts)
+	//        if err != nil {
+	//                ldputil.PrintError(err)
+	//                return
+	//        }
+	//}
 
-	for x := 1; x <= 20; x++ {
+	for x := 1; x <= 2; x++ {
 		err = loadFile("loans",
 			extractDir+fmt.Sprintf("/loan-storage.loans.json.%v",
 				x),
@@ -108,12 +106,9 @@ func loadFile(jtype string, filename string, ld *ldpadmin.Loader) error {
 		}
 	}
 
-	if jtype == "loans" {
-		err = ld.Load(jtype, dec)
-		if err != nil {
-			return err
-		}
-		return nil
+	err = ld.Load(jtype, dec)
+	if err != nil {
+		return err
 	}
 
 	/*

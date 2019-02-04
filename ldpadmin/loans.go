@@ -36,6 +36,9 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 		dueDate, _ := time.Parse(layout, dueDateStr)
 		_, err = l.sqlCopyExec(stmt, loanId, userId, "", itemId, action,
 			statusName, loanDate, dueDate)
+		if err != nil {
+			return err
+		}
 	}
 	_, err = l.sqlCopyExec(stmt)
 	if err != nil {
@@ -53,22 +56,22 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 		"INSERT INTO loans AS l\n" +
 		"    (loan_id, user_key, location_id, item_id, action,\n" +
 		"            status_name, loan_date, due_date)\n" +
-		"    SELECT sl.loan_id,\n" +
+		"    SELECT ll.loan_id,\n" +
 		"           ( SELECT u.user_key\n" +
 		"                 FROM users AS u\n" +
-		"                 WHERE sl.user_id = u.user_id\n" +
+		"                 WHERE ll.user_id = u.user_id\n" +
 		"                 ORDER BY record_effective DESC LIMIT 1\n" +
 		"           ),\n" +
 		"           'id-' || replace(lower(tll.location_name), ' ',\n" +
 		"                   '-') AS location_id,\n" +
-		"           sl.item_id,\n" +
-		"           sl.action,\n" +
-		"           sl.status_name,\n" +
-		"           sl.loan_date,\n" +
-		"           sl.due_date\n" +
-		"        FROM loading.loans AS sl\n" +
+		"           ll.item_id,\n" +
+		"           ll.action,\n" +
+		"           ll.status_name,\n" +
+		"           ll.loan_date,\n" +
+		"           ll.due_date\n" +
+		"        FROM loading.loans AS ll\n" +
 		"            LEFT JOIN normal.tmp_loans_locations AS tll\n" +
-		"                ON sl.loan_id = tll.loan_id\n" +
+		"                ON ll.loan_id = tll.loan_id\n" +
 		"    ON CONFLICT (loan_id) DO UPDATE\n" +
 		"    SET user_key = EXCLUDED.user_key,\n" +
 		"        location_id = EXCLUDED.location_id,\n" +

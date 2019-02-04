@@ -9,7 +9,7 @@ func (l *Loader) loadUsers(dec *json.Decoder) error {
 	}
 	stmt, err := l.sqlCopyStage("users",
 		"user_id", "username", "barcode", "user_type", "active",
-		"patron_group")
+		"patron_group_id")
 	if err != nil {
 		return err
 	}
@@ -26,16 +26,11 @@ func (l *Loader) loadUsers(dec *json.Decoder) error {
 		userType := j["type"].(string)
 		active := j["active"].(string)
 		patronGroupId := j["patronGroup"].(string)
-		/////////////////////////////////////////////
-		// This will be handled by sqlMergePlaceholders below
-		//     and is no longer needed
-		//err := loadGroups(patronGroupId, nil, tx, opts)
-		//if err != nil {
-		//        return err
-		//}
-		/////////////////////////////////////////////
 		_, err = l.sqlCopyExec(stmt, userId, username, barcode,
 			userType, active, patronGroupId)
+		if err != nil {
+			return err
+		}
 	}
 	_, err = l.sqlCopyExec(stmt)
 	if err != nil {
@@ -45,16 +40,50 @@ func (l *Loader) loadUsers(dec *json.Decoder) error {
 	if err != nil {
 		return err
 	}
-	/////////////////////////////////////////////
 	// Merge placeholders for groups
-	//err = l.sqlMergePlaceholders("users", "user_id", "loans", "user_id")
-	//if err != nil {
-	//        return err
-	//}
-	/////////////////////////////////////////////
-	//_, err = l.sqlExec("" +
-	//        "INSERT INTO loans AS l\n" +
-	/////////////////////////////////////////////
+	err = l.sqlMergePlaceholders("normal.groups", "group_id", "users",
+		"patron_group_id")
+	if err != nil {
+		return err
+	}
+	// Insert user records except for those with placeholders
+	_, err = l.sqlExec("" +
+		"INSERT INTO users\n" +
+		"    (user_id, username, barcode, user_type, active,\n" +
+		"            group_name, group_description)\n" +
+		"    SELECT lu.user_id,\n" +
+		"           lu.username,\n" +
+		"           lu.barcode,\n" +
+		"           lu.user_type,\n" +
+		"           lu.active,\n" +
+		"           g.group_name,\n" +
+		"           g.description\n" +
+		"        FROM loading.users AS lu\n" +
+		"            LEFT JOIN normal.groups AS g\n" +
+		"                ON lu.patron_group_id = g.group_id\n" +
+		"        WHERE NOT EXISTS\n" +
+		"          ( SELECT 1\n" +
+		"                FROM users AS u\n" +
+		"                WHERE lu.user_id = u.user_id AND\n" +
+		"                      u.username = 'NOT AVAILABLE'\n" +
+		"          );\n")
+	if err != nil {
+		return err
+	}
+	// Update placeholder records
+	_, err = l.sqlExec("" +
+		"UPDATE users AS u\n" +
+		"    SET username = lu.username,\n" +
+		"        barcode = lu.barcode,\n" +
+		"        user_type = lu.user_type,\n" +
+		"        active = lu.active,\n" +
+		"        group_name = g.group_name,\n" +
+		"        group_description = g.description\n" +
+		"    FROM loading.users AS lu\n" +
+		"        LEFT JOIN normal.groups AS g\n" +
+		"            ON lu.patron_group_id = g.group_id\n" +
+		"    WHERE u.user_id = lu.user_id AND\n" +
+		"          u.username = 'NOT AVAILABLE'\n;")
 	if err != nil {
 		return err
 	}
@@ -64,84 +93,3 @@ func (l *Loader) loadUsers(dec *json.Decoder) error {
 	}
 	return nil
 }
-
-/*
-func loadUsers(id string, json map[string]interface{}, tx *sql.Tx,
-	opts *LoadOptions) error {
-	if json != nil {
-		username := json["username"].(string)
-		barcode := json["barcode"].(string)
-		userType := json["type"].(string)
-		active := json["active"].(string)
-		patronGroupId := json["patronGroup"].(string)
-		err := loadGroups(patronGroupId, nil, tx, opts)
-		if err != nil {
-			return err
-		}
-		_, err = exec(tx, opts, sqlLoadUsers, id, username, barcode,
-			userType, active, patronGroupId)
-		// d_users
-		_, err = exec(tx, opts, sqlLoadDUsers, id, username, barcode,
-			userType, active, patronGroupId)
-		return err
-	} else {
-		_, err := exec(tx, opts, sqlLoadUsersEmpty, id)
-		return err
-	}
-}
-
-var sqlLoadUsers string = trimSql("" +
-	"  INSERT INTO users AS u                                    \n" +
-	"      (id, username, barcode, user_type, active,            \n" +
-	"              patron_group_id)                              \n" +
-	"      VALUES ($1,                                           \n" +
-	"              $2,                                           \n" +
-	"              $3,                                           \n" +
-	"              $4,                                           \n" +
-	"              $5,                                           \n" +
-	"              $6)                                           \n" +
-	"      ON CONFLICT (id) DO UPDATE                            \n" +
-	"      SET username = EXCLUDED.username,                     \n" +
-	"          barcode = EXCLUDED.barcode,                       \n" +
-	"          user_type = EXCLUDED.user_type,                   \n" +
-	"          active = EXCLUDED.active,                         \n" +
-	"          patron_group_id = EXCLUDED.patron_group_id        \n" +
-	"      WHERE u.username <> EXCLUDED.username OR              \n" +
-	"            u.barcode <> EXCLUDED.barcode OR                \n" +
-	"            u.user_type <> EXCLUDED.user_type OR            \n" +
-	"            u.active <> EXCLUDED.active OR                  \n" +
-	"            u.patron_group_id <> EXCLUDED.patron_group_id;  \n")
-
-var sqlLoadDUsers string = trimSql("" +
-	"  INSERT INTO d_users AS u                                      \n" +
-	"      (id, username, barcode, user_type, active,                \n" +
-	"              group_name, group_description)                    \n" +
-	"      SELECT $1,                                                \n" +
-	"             $2,                                                \n" +
-	"             $3,                                                \n" +
-	"             $4,                                                \n" +
-	"             $5,                                                \n" +
-	"             g.group_name,                                      \n" +
-	"             g.description                                      \n" +
-	"          FROM groups g                                         \n" +
-	"          WHERE g.id = $6                                       \n" +
-	"      ON CONFLICT (id) DO UPDATE                                \n" +
-	"      SET username = EXCLUDED.username,                         \n" +
-	"          barcode = EXCLUDED.barcode,                           \n" +
-	"          user_type = EXCLUDED.user_type,                       \n" +
-	"          active = EXCLUDED.active,                             \n" +
-	"          group_name = EXCLUDED.group_name,                     \n" +
-	"          group_description = EXCLUDED.group_description        \n" +
-	"      WHERE u.username <> EXCLUDED.username OR                  \n" +
-	"            u.barcode <> EXCLUDED.barcode OR                    \n" +
-	"            u.user_type <> EXCLUDED.user_type OR                \n" +
-	"            u.active <> EXCLUDED.active OR                      \n" +
-	"            u.group_name <> EXCLUDED.group_name OR              \n" +
-	"            u.group_description <> EXCLUDED.group_description;  \n")
-
-var sqlLoadUsersEmpty string = trimSql("" +
-	"  INSERT INTO users                 \n" +
-	"      (id)                          \n" +
-	"      VALUES ($1)                   \n" +
-	"      ON CONFLICT (id) DO NOTHING;  \n")
-*/

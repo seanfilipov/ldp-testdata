@@ -21,6 +21,8 @@ type LoaderOptions struct {
 
 func (l *Loader) Load(jsonType string, dec *json.Decoder) error {
 	switch jsonType {
+	case "users":
+		return l.loadUsers(dec)
 	case "loans":
 		return l.loadLoans(dec)
 	default:

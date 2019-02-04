@@ -77,7 +77,7 @@ func (l *Loader) sqlExec(query string,
 }
 
 func (l *Loader) sqlMergePlaceholders(
-	dimTable, dimId, factTable, factId string) error {
+	dimTable, dimId, stageFactTable, stageFactId string) error {
 	cmd := fmt.Sprintf(""+
 		"INSERT INTO %s\n"+
 		"    (%s)\n"+
@@ -86,8 +86,8 @@ func (l *Loader) sqlMergePlaceholders(
 		"            LEFT JOIN %s AS d\n"+
 		"                ON f.%s = d.%s\n"+
 		"        WHERE d.%s IS NULL;\n",
-		dimTable, dimId, factId, factTable, dimTable, factId, dimId,
-		dimId)
+		dimTable, dimId, stageFactId, stageFactTable, dimTable, stageFactId,
+		dimId, dimId)
 	_, err := l.sqlExec(cmd)
 	if err != nil {
 		return err

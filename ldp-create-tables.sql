@@ -19,13 +19,13 @@ COMMENT ON TABLE loading.exlock IS 'Exclusive lock to prevent concurrent data lo
 -- normal.groups
 
 CREATE TABLE normal.groups (
-    id           UUID NOT NULL PRIMARY KEY,
+    group_id     UUID NOT NULL PRIMARY KEY,
     group_name   TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
 	CHECK (group_name <> ''),
     description  TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
 );
 
-INSERT INTO normal.groups (id) VALUES ('00000000-0000-0000-0000-000000000000');
+-- INSERT INTO normal.groups (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 -- normal.users
 
@@ -113,12 +113,12 @@ CREATE INDEX ON users (user_id);
 -- INSERT INTO users_dim (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 CREATE TABLE loading.users (
-    user_id       UUID,
-    username      TEXT,
-    barcode       TEXT,
-    user_type     TEXT,
-    active        BOOLEAN,
-    patron_group  TEXT
+    user_id          UUID NOT NULL PRIMARY KEY,
+    username         TEXT NOT NULL,
+    barcode          TEXT NOT NULL,
+    user_type        TEXT NOT NULL,
+    active           BOOLEAN NOT NULL,
+    patron_group_id  UUID NOT NULL
 );
 
 /*
@@ -184,14 +184,14 @@ CREATE INDEX ON loans (loan_date);
 -- INSERT INTO loans_fact (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 CREATE TABLE loading.loans (
-    loan_id      UUID,
-    user_id      UUID,
-    location_id  TEXT,
-    item_id      UUID,
-    action       TEXT,
-    status_name  TEXT,
-    loan_date    TIMESTAMP,
-    due_date     TIMESTAMP
+    loan_id      UUID NOT NULL PRIMARY KEY,
+    user_id      UUID NOT NULL,
+    location_id  TEXT NOT NULL,
+    item_id      UUID NOT NULL,
+    action       TEXT NOT NULL,
+    status_name  TEXT NOT NULL,
+    loan_date    TIMESTAMP NOT NULL,
+    due_date     TIMESTAMP NOT NULL
 );
 
 /*
