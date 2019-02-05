@@ -27,6 +27,12 @@ CREATE TABLE normal.groups (
 
 -- INSERT INTO normal.groups (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
+CREATE TABLE loading.groups (
+    group_id     UUID NOT NULL PRIMARY KEY,
+    group_name   TEXT NOT NULL,
+    description  TEXT NOT NULL
+);
+
 -- normal.users
 
 /*
@@ -70,6 +76,11 @@ CREATE TABLE normal.tmp_loans_locations (
     loan_id        UUID NOT NULL PRIMARY KEY,
     location_name  TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
         CHECK (location_name <> '')
+);
+
+CREATE TABLE loading.tmp_loans_locations (
+    loan_id        UUID NOT NULL PRIMARY KEY,
+    location_name  TEXT NOT NULL
 );
 
 -- INSERT INTO tmp_loans_locations (loan_id)
@@ -135,7 +146,7 @@ SELECT u.id,
 */
 
 CREATE TABLE locations (
-    id             TEXT NOT NULL PRIMARY KEY,
+    location_key   TEXT NOT NULL PRIMARY KEY,
     location_name  TEXT NOT NULL DEFAULT 'NOT AVAILABLE'
 );
 
@@ -151,20 +162,20 @@ SELECT 'id-' || replace(lower(tll.location_name), ' ', '-') id,
 */
 
 CREATE TABLE loans (
-    loan_key     BIGSERIAL NOT NULL PRIMARY KEY,
+    loan_key      BIGSERIAL NOT NULL PRIMARY KEY,
         CHECK (loan_key > 0),
-    loan_id      UUID NOT NULL UNIQUE,
+    loan_id       UUID NOT NULL UNIQUE,
     -- user_id      UUID NOT NULL --REFERENCES users_dim (id)
             -- DEFAULT '00000000-0000-0000-0000-000000000000',
-    user_key     BIGINT NOT NULL REFERENCES users (user_key),
-    location_id  TEXT NOT NULL REFERENCES locations (id)
+    user_key      BIGINT NOT NULL REFERENCES users (user_key),
+    location_key  TEXT NOT NULL REFERENCES locations (location_key)
             DEFAULT '00000000-0000-0000-0000-000000000000',
-    item_id      UUID NOT NULL
+    item_id       UUID NOT NULL
             DEFAULT '00000000-0000-0000-0000-000000000000',
-    action       TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
-    status_name  TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
-    loan_date    TIMESTAMP NOT NULL DEFAULT 'epoch',
-    due_date     TIMESTAMP NOT NULL DEFAULT 'epoch'
+    action        TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
+    status_name   TEXT NOT NULL DEFAULT 'NOT AVAILABLE',
+    loan_date     TIMESTAMP NOT NULL DEFAULT 'epoch',
+    due_date      TIMESTAMP NOT NULL DEFAULT 'epoch'
 );
 
 COMMENT ON TABLE loans IS 'Loan transactions';
@@ -184,14 +195,14 @@ CREATE INDEX ON loans (loan_date);
 -- INSERT INTO loans_fact (id) VALUES ('00000000-0000-0000-0000-000000000000');
 
 CREATE TABLE loading.loans (
-    loan_id      UUID NOT NULL PRIMARY KEY,
-    user_id      UUID NOT NULL,
-    location_id  TEXT NOT NULL,
-    item_id      UUID NOT NULL,
-    action       TEXT NOT NULL,
-    status_name  TEXT NOT NULL,
-    loan_date    TIMESTAMP NOT NULL,
-    due_date     TIMESTAMP NOT NULL
+    loan_id       UUID NOT NULL PRIMARY KEY,
+    user_id       UUID NOT NULL,
+    location_key  TEXT NOT NULL,
+    item_id       UUID NOT NULL,
+    action        TEXT NOT NULL,
+    status_name   TEXT NOT NULL,
+    loan_date     TIMESTAMP NOT NULL,
+    due_date      TIMESTAMP NOT NULL
 );
 
 /*

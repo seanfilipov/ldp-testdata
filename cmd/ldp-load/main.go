@@ -48,11 +48,11 @@ func main() {
 
 	fmt.Printf("-- Starting load to database '%s'\n", *dbFlag)
 
-	//err = loadAll("groups", extractDir+"/groups.json", tx, opts)
-	//if err != nil {
-	//        ldputil.PrintError(err)
-	//        return
-	//}
+	err = loadFile("groups", extractDir+"/groups.json", ld)
+	if err != nil {
+		ldputil.PrintError(err)
+		return
+	}
 
 	err = loadFile("users", extractDir+"/users.json", ld)
 	if err != nil {
@@ -60,18 +60,18 @@ func main() {
 		return
 	}
 
-	//for x := 1; x <= 2; x++ {
-	//        err = loadAll("tmp_loans_locations",
-	//                extractDir+fmt.Sprintf("/circulation.loans.json.%v",
-	//                        x),
-	//                tx, opts)
-	//        if err != nil {
-	//                ldputil.PrintError(err)
-	//                return
-	//        }
-	//}
+	for x := 1; x <= 20; x++ {
+		err = loadFile("tmp_loans_locations",
+			extractDir+fmt.Sprintf("/circulation.loans.json.%v",
+				x),
+			ld)
+		if err != nil {
+			ldputil.PrintError(err)
+			return
+		}
+	}
 
-	for x := 1; x <= 2; x++ {
+	for x := 1; x <= 20; x++ {
 		err = loadFile("loans",
 			extractDir+fmt.Sprintf("/loan-storage.loans.json.%v",
 				x),
@@ -110,24 +110,6 @@ func loadFile(jtype string, filename string, ld *ldpadmin.Loader) error {
 	if err != nil {
 		return err
 	}
-
-	/*
-		// Read and load array elements.
-		for dec.More() {
-
-			var i interface{}
-			err := dec.Decode(&i)
-			if err != nil {
-				return err
-			}
-
-			err = ldpadmin.LoadOLD(jtype, i.(map[string]interface{}), tx,
-				opts)
-			if err != nil {
-				return err
-			}
-		}
-	*/
 
 	return nil
 }

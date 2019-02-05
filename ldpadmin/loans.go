@@ -11,7 +11,7 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 		return err
 	}
 	stmt, err := l.sqlCopyStage("loans",
-		"loan_id", "user_id", "location_id", "item_id", "action",
+		"loan_id", "user_id", "location_key", "item_id", "action",
 		"status_name", "loan_date", "due_date")
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 	}
 	_, err = l.sqlExec("" +
 		"INSERT INTO loans AS l\n" +
-		"    (loan_id, user_key, location_id, item_id, action,\n" +
+		"    (loan_id, user_key, location_key, item_id, action,\n" +
 		"            status_name, loan_date, due_date)\n" +
 		"    SELECT ll.loan_id,\n" +
 		"           ( SELECT u.user_key\n" +
@@ -63,7 +63,7 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 		"                 ORDER BY record_effective DESC LIMIT 1\n" +
 		"           ),\n" +
 		"           'id-' || replace(lower(tll.location_name), ' ',\n" +
-		"                   '-') AS location_id,\n" +
+		"                   '-'),\n" +
 		"           ll.item_id,\n" +
 		"           ll.action,\n" +
 		"           ll.status_name,\n" +
@@ -74,14 +74,14 @@ func (l *Loader) loadLoans(dec *json.Decoder) error {
 		"                ON ll.loan_id = tll.loan_id\n" +
 		"    ON CONFLICT (loan_id) DO UPDATE\n" +
 		"    SET user_key = EXCLUDED.user_key,\n" +
-		"        location_id = EXCLUDED.location_id,\n" +
+		"        location_key = EXCLUDED.location_key,\n" +
 		"        item_id = EXCLUDED.item_id,\n" +
 		"        action = EXCLUDED.action,\n" +
 		"        status_name = EXCLUDED.status_name,\n" +
 		"        loan_date = EXCLUDED.loan_date,\n" +
 		"        due_date = EXCLUDED.due_date\n" +
 		"    WHERE l.user_key <> EXCLUDED.user_key OR\n" +
-		"          l.location_id <> EXCLUDED.location_id OR\n" +
+		"          l.location_key <> EXCLUDED.location_key OR\n" +
 		"          l.item_id <> EXCLUDED.item_id OR\n" +
 		"          l.action <> EXCLUDED.action OR\n" +
 		"          l.status_name <> EXCLUDED.status_name OR\n" +

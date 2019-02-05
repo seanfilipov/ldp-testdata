@@ -21,33 +21,18 @@ type LoaderOptions struct {
 
 func (l *Loader) Load(jsonType string, dec *json.Decoder) error {
 	switch jsonType {
+	case "groups":
+		return l.loadGroups(dec)
 	case "users":
 		return l.loadUsers(dec)
+	case "tmp_loans_locations":
+		return l.loadTmpLoansLocs(dec)
 	case "loans":
 		return l.loadLoans(dec)
 	default:
 		return fmt.Errorf("unknown type \"%v\"", jsonType)
 	}
 }
-
-/*
-func LoadOLD(jsonType string, json map[string]interface{}, tx *sql.Tx,
-	opts *LoadOptions) error {
-	id := json["id"].(string)
-	switch jsonType {
-	case "groups":
-		return loadGroups(id, json, tx, opts)
-	case "users":
-		return loadUsers(id, json, tx, opts)
-	//case "loans":
-	//return loadLoans(id, json, tx, opts)
-	case "tmp_loans_locations":
-		return loadTmpLoansLocs(id, json, tx, opts)
-	default:
-		return fmt.Errorf("unknown type \"%v\"", jsonType)
-	}
-}
-*/
 
 func NewLoader(db *sql.DB, opts *LoaderOptions) (*Loader, error) {
 	// Start transaction for exclusive lock
@@ -102,11 +87,3 @@ func (l *Loader) Close() error {
 	}
 	return nil
 }
-
-// OLD
-/*
-type LoadOptions struct {
-	// Debug enables debugging output if set to true.
-	Debug bool
-}
-*/
