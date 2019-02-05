@@ -1,0 +1,134 @@
+[
+    {
+        "group": "Freshman",
+        "desc": "First year in undergrad",
+        "id": "3ddc3bee-4dc1-49e9-ae07-0d6cbaf52c93",
+        "metadata": {
+            "createdDate": "2018-11-19T14:29:58.542+0000",
+            "createdByUserId": "dc8c90bf-6869-4478-88d7-dd70d7920125",
+            "updatedDate": "2018-11-19T14:29:58.542+0000",
+            "updatedByUserId": "dc8c90bf-6869-4478-88d7-dd70d7920125"
+        }
+    },
+    {
+        "group": "Sophomore",
+        "desc": "Second year in undergrad",
+        "id": "4b7d3cfb-542e-43f6-9b81-4659f6c8af50",
+        "metadata": {
+            "createdDate": "2018-11-19T14:29:58.542+0000",
+            "createdByUserId": "eff07f53-aa63-41f8-89a0-0097f23689c7",
+            "updatedDate": "2018-11-19T14:29:58.542+0000",
+            "updatedByUserId": "eff07f53-aa63-41f8-89a0-0097f23689c7"
+        }
+    },
+    {
+        "group": "Junior",
+        "desc": "Third year in undergrad",
+        "id": "f1daa968-99d6-4f7a-be67-ceaf41b83a54",
+        "metadata": {
+            "createdDate": "2018-11-19T14:29:58.542+0000",
+            "createdByUserId": "53861160-86df-42f9-9c86-9fd1ed1bc8fa",
+            "updatedDate": "2018-11-19T14:29:58.542+0000",
+            "updatedByUserId": "53861160-86df-42f9-9c86-9fd1ed1bc8fa"
+        }
+    },
+    {
+        "group": "Senior",
+        "desc": "Fourth year in undergrad",
+        "id": "5da8a220-575f-4c07-b6cd-d067c7bc934d",
+        "metadata": {
+            "createdDate": "2018-11-19T14:29:58.542+0000",
+            "createdByUserId": "ee348f42-ff03-449d-b290-6ad1c3a23b57",
+            "updatedDate": "2018-11-19T14:29:58.542+0000",
+            "updatedByUserId": "ee348f42-ff03-449d-b290-6ad1c3a23b57"
+        }
+    },
+    {
+        "group": "Graduate",
+        "desc": "Masters or Doctoral student",
+        "id": "87cf8acc-effb-4861-9f43-44a8f82850f7",
+        "metadata": {
+            "createdDate": "2018-11-19T14:29:58.542+0000",
+            "createdByUserId": "ab186adb-e4e2-418b-b6d1-23c6a7bda4fd",
+            "updatedDate": "2018-11-19T14:29:58.542+0000",
+            "updatedByUserId": "ab186adb-e4e2-418b-b6d1-23c6a7bda4fd"
+        }
+    },
+    {
+        "group": "Alumni",
+        "desc": "Graduated from undergrad",
+        "id": "5659141c-aff7-47d9-bab1-8660c785a181",
+        "metadata": {
+            "createdDate": "2018-11-19T14:29:58.542+0000",
+            "createdByUserId": "09fb6562-b3d0-4698-8348-cb8b63570e66",
+            "updatedDate": "2018-11-19T14:29:58.542+0000",
+            "updatedByUserId": "09fb6562-b3d0-4698-8348-cb8b63570e66"
+        }
+    },
+    {
+        "group": "Faculty",
+        "desc": "Professor or other faculty",
+        "id": "5d758964-7ca2-4ef5-8762-edcfab521d1f",
+        "metadata": {
+            "createdDate": "2018-11-19T14:29:58.542+0000",
+            "createdByUserId": "250fe890-de26-47cf-baa4-784b10d0e815",
+            "updatedDate": "2018-11-19T14:29:58.542+0000",
+            "updatedByUserId": "250fe890-de26-47cf-baa4-784b10d0e815"
+        }
+    },
+    {
+        "group": "Staff",
+        "desc": "Staff at the university",
+        "id": "51074267-8f26-442a-a23c-bfe2c83e6cf2",
+        "metadata": {
+            "createdDate": "2018-11-19T14:29:58.542+0000",
+            "createdByUserId": "76ec1239-931a-49d0-97a4-d5741a717020",
+            "updatedDate": "2018-11-19T14:29:58.542+0000",
+            "updatedByUserId": "76ec1239-931a-49d0-97a4-d5741a717020"
+        }
+    },
+    {
+        "group": "Affiliate_A",
+        "desc": "Type of affiliate",
+        "id": "329e7479-5a3c-4398-9e79-69d92b6b5cd0",
+        "metadata": {
+            "createdDate": "2018-11-19T14:29:58.542+0000",
+            "createdByUserId": "2f2234d2-b81f-46fc-8557-231664e65930",
+            "updatedDate": "2018-11-19T14:29:58.542+0000",
+            "updatedByUserId": "2f2234d2-b81f-46fc-8557-231664e65930"
+        }
+    },
+    {
+        "group": "Affiliate_B",
+        "desc": "Type of affiliate",
+        "id": "075260aa-c58a-4cc3-829c-9a4af59ad7fc",
+        "metadata": {
+            "createdDate": "2018-11-19T14:29:58.542+0000",
+            "createdByUserId": "73d4141d-335d-4748-8ae9-8d5702ad9c1f",
+            "updatedDate": "2018-11-19T14:29:58.542+0000",
+            "updatedByUserId": "73d4141d-335d-4748-8ae9-8d5702ad9c1f"
+        }
+    },
+    {
+        "group": "Affiliate_C",
+        "desc": "Type of affiliate",
+        "id": "0146a510-a1b6-4f69-bff1-445415ed9de0",
+        "metadata": {
+            "createdDate": "2018-11-19T14:29:58.542+0000",
+            "createdByUserId": "f6fb5697-1826-4ee3-a384-66da5f54e8aa",
+            "updatedDate": "2018-11-19T14:29:58.542+0000",
+            "updatedByUserId": "f6fb5697-1826-4ee3-a384-66da5f54e8aa"
+        }
+    },
+    {
+        "group": "Affiliate_D",
+        "desc": "Type of affiliate",
+        "id": "7abb5aeb-96d8-4e35-9d24-5b05d9d31a91",
+        "metadata": {
+            "createdDate": "2018-11-19T14:29:58.542+0000",
+            "createdByUserId": "625b908a-0117-4c0b-b054-33c7f97f979e",
+            "updatedDate": "2018-11-19T14:29:58.542+0000",
+            "updatedByUserId": "625b908a-0117-4c0b-b054-33c7f97f979e"
+        }
+    }
+]
