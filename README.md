@@ -42,10 +42,10 @@ $ export GOPATH=$HOME/go
 Then to download and compile the software:
 
 ```shell
-$ go get -u github.com/folio-org/ldp/...
+$ go get -u github.com/folio-org/ldp/cmd/ldp
 ```
 
-The compiled executable files, `ldp-load` etc., should appear in `$GOPATH/bin/`.  
+The compiled executable file, `ldp`, should appear in `$GOPATH/bin/`.  
 
 
 Running the LDP
@@ -64,7 +64,7 @@ host = localhost
 port = 5432
 user = ldpadmin
 password = password_goes_here
-dbname = ldp
+dbname = ldpdemo
 ```
 
 The server looks for a configuration file like this one in a location
@@ -79,8 +79,8 @@ $ export LDP_CONFIG_FILE=/etc/ldp/ldp.conf
 
 ```shell
 $ createuser ldpadmin
-$ createdb -O ldpadmin ldp
-$ ldp-init
+$ createdb -O ldpadmin ldpdemo
+$ ldp -init
 ```
 
 ### Loading data into the database
@@ -88,28 +88,35 @@ $ ldp-init
 To load sample data from JSON files in `~/testdata/20181214_043055`:
 
 ```shell
-$ ldp-load -dir ~/testdata/20181214_043055
+$ ldp -load -dir ~/testdata/20181214_043055
 ```
 
 ### Schema
 
-The LDP database uses "star schema" with tables prefixed `f_` for fact
-and `d_` for dimension, for example, `f_loans` and `d_users`.  It also
-includes tables needed for denormalizing new data during loading, for
-example, the `groups` table.
+The LDP database uses "star schema" and all tables are located in the
+`public` schema.  It also includes tables needed for denormalizing new
+data during loading, which are stored in the `normal` schema.  The
+`loading` schema is for internal use by the data loader.
 
 
 ### Update process
 
-The `ldp-load` tool performs incremental loading, but it is also used
-for batch loads.  It reads one unit of FOLIO data (e.g. a loan
-transaction) at a time and adds it to the LDP database, overwriting any
-existing data that has the same ID.
+Running the data loader, by using the `-load` flag, performs incremental
+loading, but it is also used for batch loads.  It reads one unit of
+FOLIO data (e.g. a loan transaction, or a user record) at a time and
+adds it to the LDP database.  In the case of "fact" tables, loading
+overwrites existing data that have the same FOLIO ID.  In the case of
+"dimension" tables, such a collision results in both versions being
+preserved and versioned using the `record_effective` attribute.  LDP
+primary keys have a `_key` suffix, while FOLIO IDs have a `_id` suffix,
+and the primary keys are used to distinguish between different records
+with the same FOLIO ID.
 
-If the new data contain foreign key IDs that reference data the LDP also
-stores, the loading process ensures that the referenced data exist, or
-if not, creates placeholder data that can be a subsequent load.  This
-allows it to process new data that are streamed from FOLIO "out of
-order".
+If the new data being loaded contain foreign key IDs that reference data
+the LDP also stores, the loading process ensures that the referenced
+data exist, or if not, creates placeholder data that can be
+automatically filled in by a subsequent load containing the needed data.
+This will allow the loader to process new data that are streamed from
+FOLIO "out of order".
 
 
