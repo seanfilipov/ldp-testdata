@@ -2,6 +2,7 @@ package main
 
 import (
 	"math/rand"
+	"path/filepath"
 	"time"
 
 	"github.com/icrowley/fake"
@@ -28,9 +29,10 @@ func isActive() bool {
 	}
 }
 
-func generateUsers(filepath string) {
+func generateUsers(outputDir string, numUsers int) {
 	chnl := make(chan interface{}, 1)
-	go streamRandomSliceItem("./groups.json", chnl)
+	groupsPath := filepath.Join(outputDir, "groups.json")
+	go streamRandomSliceItem(groupsPath, chnl)
 	makeUser := func() user {
 		randomGroup, _ := <-chnl
 		randomGroupMap := randomGroup.(map[string]interface{})
@@ -47,9 +49,10 @@ func generateUsers(filepath string) {
 	}
 	// fmt.Printf("%+v\n", makeUser())
 	var users []interface{}
-	for i := 0; i < 30000; i++ {
+	for i := 0; i < numUsers; i++ {
 		u := makeUser()
 		users = append(users, u)
 	}
+	filepath := filepath.Join(outputDir, "users.json")
 	writeSliceToFile(filepath, users, true)
 }

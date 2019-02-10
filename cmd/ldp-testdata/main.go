@@ -1,25 +1,90 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
+	"path/filepath"
+	"time"
 )
 
-func main() {
-	fmt.Println("ldp-testdata")
+func makeTimestampedDir(dirFlag string) string {
+	if dirFlag != "" {
+		os.MkdirAll(dirFlag, os.ModePerm) // Make the directory if it does not already exist
+		return dirFlag
+	}
+	extractDir := "./extract-output"
+	currentTime := time.Now()
+	timeStr := currentTime.Format("20060102_150405")
+	outputDir := filepath.Join(extractDir, timeStr)
+	os.MkdirAll(outputDir, os.ModePerm)
+	return outputDir
+}
 
-	// generateGroups("./groups.json")
-	// generateUsers("./users.json")
-	// generateLocations("./locations.json")
-	// generateItems("./items.json")
-	tenMillion := 10000000
-	generateLoans("./loans.json", tenMillion)
-	// groupsFilename := "extract-output/sample/groups.json"
-	// groupsChnl := make(chan string)
-	// go streamRandomLine(groupsFilename, groupsChnl)
-	// newVal, ok := <-groupsChnl
-	// newVal2, _ := <-groupsChnl
-	// if ok {
-	// 	fmt.Println(newVal, newVal2)
-	// }
+func printUsage() {
+	fmt.Println("Usage:")
+	fmt.Println("./ldp-testdata FLAGS [all|groups|users|locations|items|loans|circloans]")
+	fmt.Println("  where FLAGS include:")
+	flag.PrintDefaults() // Print the flag help strings
+}
+
+func main() {
+	flag.Usage = func() {
+		printUsage()
+	}
+	dirFlag := flag.String("dir", "",
+		`The directory to use for extract output. If the selected test data depends on
+other test data (e.g. 'users' depends on 'groups'), that dependency should exist
+in this directory.`)
+	numGroupsFlag := flag.Int("nGroups", 12, `The number of groups to create`)
+	numUsersFlag := flag.Int("nUsers", 30000, `The number of users to create`)
+	numLocationsFlag := flag.Int("nLocations", 20, `The number of locations to create`)
+	numLoansFlag := flag.Int("nLoans", 10000, `The number of loans to create`)
+	flag.Parse()
+	if len(flag.Args()) >= 1 {
+		mode := flag.Arg(0)
+		switch mode {
+		case "all":
+			timestampedDir := makeTimestampedDir(*dirFlag)
+			generateGroups(timestampedDir, *numGroupsFlag)
+			generateUsers(timestampedDir, *numUsersFlag)
+			generateLocations(timestampedDir, *numLocationsFlag)
+			generateItems(timestampedDir)
+			generateLoans(timestampedDir, *numLoansFlag)
+			generateCirculationLoans(timestampedDir)
+			fmt.Printf("Generated data in %s\n", timestampedDir)
+
+		case "groups":
+			timestampedDir := makeTimestampedDir(*dirFlag)
+			generateGroups(timestampedDir, *numGroupsFlag)
+			fmt.Printf("Generated data in %s\n", timestampedDir)
+		case "users":
+			timestampedDir := makeTimestampedDir(*dirFlag)
+			generateUsers(timestampedDir, *numUsersFlag)
+			fmt.Printf("Generated data in %s\n", timestampedDir)
+		case "locations":
+			timestampedDir := makeTimestampedDir(*dirFlag)
+			generateLocations(timestampedDir, *numLocationsFlag)
+			fmt.Printf("Generated data in %s\n", timestampedDir)
+		case "items":
+			timestampedDir := makeTimestampedDir(*dirFlag)
+			generateItems(timestampedDir)
+			fmt.Printf("Generated data in %s\n", timestampedDir)
+		case "loans":
+			timestampedDir := makeTimestampedDir(*dirFlag)
+			generateLoans(timestampedDir, *numLoansFlag)
+			fmt.Printf("Generated data in %s\n", timestampedDir)
+		case "circloans":
+			timestampedDir := makeTimestampedDir(*dirFlag)
+			generateCirculationLoans(timestampedDir)
+			fmt.Printf("Generated data in %s\n", timestampedDir)
+		default:
+			fmt.Printf("Error: '%s' is not a valid argument\n", mode)
+			printUsage()
+		}
+	} else {
+		printUsage()
+	}
+
 	// threeGenerators()
 }

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"path/filepath"
+	"strconv"
+
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -17,7 +20,7 @@ type group struct {
 	Metadata groupMetadata `json:"metadata"`
 }
 
-func generateGroups(filepath string) {
+func generateGroups(outputDir string, numGroups int) {
 	groupNames := []string{
 		"Freshman", "Sophomore", "Junior", "Senior", "Graduate", "Alumni", "Faculty",
 		"Staff", "Affiliate_A", "Affiliate_B", "Affiliate_C", "Affiliate_D",
@@ -30,6 +33,17 @@ func generateGroups(filepath string) {
 	}
 	randomDate := "2018-11-19T14:29:58.542+0000"
 
+	// Allow changing the default number of groups
+	defaultNumGroups := len(groupNames)
+	if numGroups > defaultNumGroups {
+		for j := 0; j < numGroups-defaultNumGroups; j++ {
+			groupNames = append(groupNames, "Affiliate_"+strconv.Itoa(j))
+			groupDesc = append(groupDesc, "Type of affiliate")
+		}
+	} else if numGroups < defaultNumGroups {
+		groupNames = groupNames[:numGroups]
+		groupDesc = groupDesc[:numGroups]
+	}
 	makeGroup := func(i int) group {
 		creator := uuid.Must(uuid.NewV4()).String()
 		return group{
@@ -49,5 +63,6 @@ func generateGroups(filepath string) {
 		g := makeGroup(i)
 		groups = append(groups, g)
 	}
+	filepath := filepath.Join(outputDir, "groups.json")
 	writeSliceToFile(filepath, groups, true)
 }

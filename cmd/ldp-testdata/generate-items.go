@@ -1,6 +1,8 @@
 package main
 
 import (
+	"path/filepath"
+
 	"github.com/icrowley/fake"
 	"github.com/mitchellh/mapstructure"
 	uuid "github.com/satori/go.uuid"
@@ -22,10 +24,11 @@ type item struct {
 	MaterialType      materialType `json:"materialType"`
 }
 
-func generateItems(filepath string) {
+func generateItems(outputDir string) {
 	bookChnl := make(chan string, 1)
 	locChnl := make(chan interface{}, 1)
-	go streamRandomSliceItem("./locations.json", locChnl)
+	locationsPath := filepath.Join(outputDir, "locations.json")
+	go streamRandomSliceItem(locationsPath, locChnl)
 	go streamRandomLine("./book_titles.txt", bookChnl)
 	makeItem := func() item {
 		// TODO: Should iterate over titles, not get a random one
@@ -48,5 +51,6 @@ func generateItems(filepath string) {
 		u := makeItem()
 		items = append(items, u)
 	}
+	filepath := filepath.Join(outputDir, "items.json")
 	writeSliceToFile(filepath, items, true)
 }

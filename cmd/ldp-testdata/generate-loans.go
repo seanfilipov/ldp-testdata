@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -24,6 +25,7 @@ type loan struct {
 }
 
 type loanGenerator struct {
+	outputDir  string
 	ItemChnl   chan interface{}
 	UserChnl   chan interface{}
 	CheckedOut map[string]loan
@@ -39,7 +41,6 @@ type loanGenerator struct {
 // If that item has already been checked out, check it back in
 // Otherwise, check it out
 func (lg loanGenerator) makeLoanTxn(date time.Time, itemID string) (retLoan loan) {
-	// TODO: Should iterate over titles, not get a random one
 	if itemID == "" {
 		randomItem, _ := <-lg.ItemChnl
 		var itemObj item
@@ -103,10 +104,10 @@ func (lg loanGenerator) makeLoans(startDay int) (day int, loans []interface{}) {
 func (lg loanGenerator) generateLoansSingleFile(startDay, callNum int) int {
 	reachedDay, loans := lg.makeLoans(startDay)
 	callNumStr := strconv.Itoa(callNum)
-	filepath := "./loans.json." + callNumStr
+	filepath := filepath.Join(lg.outputDir, "loans.json."+callNumStr)
 	writeSliceToFile(filepath, loans, true)
 	totalWritten := strconv.Itoa(((callNum - 1) * lg.TxnPerFile) + len(loans))
-	fmt.Println("Wrote " + strconv.Itoa(len(loans)) + " transactions to " + filepath + " (" + totalWritten + " total)")
+	fmt.Printf("Wrote %d transactions to %s (%s total)\n", len(loans), filepath, totalWritten)
 	return reachedDay
 }
 func (lg loanGenerator) recurse(startDay, callNum int) {
@@ -121,16 +122,18 @@ func (lg loanGenerator) run() {
 	for reachedDay != lg.EndDay {
 		runCount++
 		reachedDay = lg.generateLoansSingleFile(reachedDay, runCount)
-		fmt.Println("Run #" + strconv.Itoa(runCount) + "; reached day #" + strconv.Itoa(reachedDay))
+		fmt.Printf("Run #%d: reached day %d\n", runCount, reachedDay)
 	}
 }
 
 func (lg loanGenerator) initChannels() {
-	go streamRandomSliceItem("./items.json", lg.ItemChnl)
-	go streamRandomSliceItem("./users.json", lg.UserChnl)
+	itemsPath := filepath.Join(lg.outputDir, "items.json")
+	usersPath := filepath.Join(lg.outputDir, "users.json")
+	go streamRandomSliceItem(itemsPath, lg.ItemChnl)
+	go streamRandomSliceItem(usersPath, lg.UserChnl)
 }
 
-func generateLoans(filepath string, totalNumTxns int) {
+func generateLoans(outputDir string, totalNumTxns int) {
 	numDays := 365
 	txnPerFile := 100000
 	txnPerDay := int(math.Ceil(float64(totalNumTxns / numDays)))
@@ -138,6 +141,7 @@ func generateLoans(filepath string, totalNumTxns int) {
 	numFilesNeeded := strconv.Itoa(int(math.Ceil(float64((txnPerDay * numDays) / txnPerFile))))
 	fmt.Println("Going to write ~" + numFilesNeeded + " files")
 	lg := loanGenerator{
+		outputDir,
 		make(chan interface{}, 1),
 		make(chan interface{}, 1),
 		make(map[string]loan),

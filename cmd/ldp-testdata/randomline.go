@@ -118,3 +118,15 @@ func streamRandomSliceItem(filename string, chnl chan interface{}) {
 		chnl <- randomItem
 	}
 }
+
+// Linearly parse the file as valid JSON
+func streamSliceItem(filename string, chnl chan interface{}) {
+	jsonFile, _ := os.Open(filename)
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	var result []interface{}
+	json.Unmarshal(byteValue, &result)
+	for i := 0; i < len(result); i++ {
+		chnl <- result[i]
+	}
+	close(chnl)
+}
