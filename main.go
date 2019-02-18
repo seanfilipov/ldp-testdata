@@ -23,7 +23,7 @@ func makeTimestampedDir(dirFlag string) string {
 
 func printUsage() {
 	fmt.Println("Usage:")
-	fmt.Println("./ldp-testdata FLAGS [all|groups|users|locations|items|loans|circloans]")
+	fmt.Println("./ldp-testdata FLAGS [all|groups|users|locations|items|loans|circloans|storageitems]")
 	fmt.Println("  where FLAGS include:")
 	flag.PrintDefaults() // Print the flag help strings
 }
@@ -52,6 +52,7 @@ in this directory.`)
 			generateItems(timestampedDir)
 			generateLoans(timestampedDir, *numLoansFlag)
 			generateCirculationLoans(timestampedDir)
+			generateStorageItems(timestampedDir)
 			fmt.Printf("Generated data in %s\n", timestampedDir)
 
 		case "groups":
@@ -77,6 +78,10 @@ in this directory.`)
 		case "circloans":
 			timestampedDir := makeTimestampedDir(*dirFlag)
 			generateCirculationLoans(timestampedDir)
+			fmt.Printf("Generated data in %s\n", timestampedDir)
+		case "storageitems":
+			timestampedDir := makeTimestampedDir(*dirFlag)
+			generateStorageItems(timestampedDir)
 			fmt.Printf("Generated data in %s\n", timestampedDir)
 		default:
 			fmt.Printf("Error: '%s' is not a valid argument\n", mode)
