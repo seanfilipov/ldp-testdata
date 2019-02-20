@@ -1,4 +1,4 @@
-package main
+package testdata
 
 import (
 	"fmt"
@@ -58,13 +58,12 @@ func makeItemsMap(filepath string) map[string]item {
 	return itemsMap
 }
 
-func generateCirculationLoans(outputDir string) {
+func GenerateCirculationLoans(outputDir string) {
 	var circLoans []interface{}
 	itemsPath := filepath.Join(outputDir, "items.json")
 	itemsMap := makeItemsMap(itemsPath)
 	numFiles := countLoanStorageFiles(outputDir)
 	for i := 1; i <= numFiles; i++ {
-		fmt.Println("hm")
 		loanStorageFilepath := filepath.Join(outputDir, "loans.json."+strconv.Itoa(i))
 		loanChnl := make(chan interface{}, 1)
 		go streamSliceItem(loanStorageFilepath, loanChnl)

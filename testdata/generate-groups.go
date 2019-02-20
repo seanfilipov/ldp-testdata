@@ -1,4 +1,4 @@
-package main
+package testdata
 
 import (
 	"path/filepath"
@@ -20,7 +20,7 @@ type group struct {
 	Metadata groupMetadata `json:"metadata"`
 }
 
-func generateGroups(outputDir string, numGroups int) {
+func GenerateGroups(outputDir string, numGroups int) {
 	groupNames := []string{
 		"Freshman", "Sophomore", "Junior", "Senior", "Graduate", "Alumni", "Faculty",
 		"Staff", "Affiliate_A", "Affiliate_B", "Affiliate_C", "Affiliate_D",

@@ -1,4 +1,4 @@
-package main
+package testdata
 
 import (
 	"fmt"
@@ -33,7 +33,7 @@ func randomCopyNumbers() []string {
 
 // StorageItems share the same information with inventory items
 // (ID, holdingsRecordId, barcode)
-func generateStorageItems(outputDir string) {
+func GenerateStorageItems(outputDir string) {
 	rand.Seed(time.Now().UnixNano())
 	var storageItems []interface{}
 	itemsPath := filepath.Join(outputDir, "items.json")
@@ -53,5 +53,5 @@ func generateStorageItems(outputDir string) {
 		storageItems = append(storageItems, oneStorageItem)
 	}
 	filepath := filepath.Join(outputDir, "storageItems.json")
-	writeSliceToFile(filepath, storageItems, true)
+	writeFolioSliceToFile("items", filepath, storageItems, true)
 }

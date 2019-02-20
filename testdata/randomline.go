@@ -1,4 +1,4 @@
-package main
+package testdata
 
 // This purpose of this file is to retrieve a random LINE from a file (assumes line-by-line JSON)
 // There are two functions to do this:

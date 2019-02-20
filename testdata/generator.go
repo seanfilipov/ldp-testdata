@@ -1,4 +1,4 @@
-package main
+package testdata
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ import (
 // It just wants to know how much data to generate and how many possible values there are.
 
 // Streams integers, each integer being between 0 and the given max
-func generateRandomValues(maxValue, outputSize int, chnl chan int) {
+func GenerateRandomValues(maxValue, outputSize int, chnl chan int) {
 	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < outputSize; i++ {
 		chnl <- rand.Intn(maxValue)
@@ -43,7 +43,7 @@ func threeGenerators() {
 	thirdGen := Generator{6, 10, make(chan int)}
 	generators := []Generator{firstGen, secondGen, thirdGen}
 	for _, gen := range generators {
-		go generateRandomValues(gen.MaxValue, gen.OutputSize, gen.Channel)
+		go GenerateRandomValues(gen.MaxValue, gen.OutputSize, gen.Channel)
 	}
 	for {
 		// Get a response from each generator

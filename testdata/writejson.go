@@ -1,4 +1,4 @@
-package main
+package testdata
 
 // The purpose of this file is to write Go slices to file in the JSON format.
 // There are two functions to do this:
@@ -18,6 +18,28 @@ func check(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+// Write JSON to a file using the FOLIO format
+func writeFolioSliceToFile(fieldName, filepath string, jsonSlice []interface{}, indent bool) {
+	// Create a file
+	aMap := make(map[string]interface{})
+	aMap[fieldName] = jsonSlice
+	aMap["totalCount"] = len(jsonSlice)
+	f, err := os.Create(filepath)
+	check(err)
+	defer f.Close()
+	w := bufio.NewWriter(f)
+	// Write JSON to file
+	if indent {
+		byteJSON, _ := json.MarshalIndent(aMap, "", "    ")
+		w.Write(byteJSON)
+	} else {
+		byteJSON, _ := json.Marshal(aMap)
+		w.Write(byteJSON)
+	}
+	w.WriteString("\n")
+	w.Flush()
 }
 
 // Writes valid JSON to a single line of a file
