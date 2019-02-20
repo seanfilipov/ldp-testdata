@@ -1,4 +1,4 @@
-package main
+package testdata
 
 import (
 	"path/filepath"
@@ -24,7 +24,7 @@ type item struct {
 	MaterialType      materialType `json:"materialType"`
 }
 
-func generateItems(outputDir string) {
+func GenerateItems(outputDir string) {
 	bookChnl := make(chan string, 1)
 	locChnl := make(chan interface{}, 1)
 	locationsPath := filepath.Join(outputDir, "locations.json")

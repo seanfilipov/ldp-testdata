@@ -1,4 +1,4 @@
-package main
+package testdata
 
 import (
 	"path/filepath"
@@ -12,7 +12,7 @@ type location struct {
 	ID   string `json:"id"`
 }
 
-func generateLocations(outputDir string, numLocations int) {
+func GenerateLocations(outputDir string, numLocations int) {
 	makeLocation := func() location {
 		return location{
 			Name: fake.LastName() + " Library",

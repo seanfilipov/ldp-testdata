@@ -1,4 +1,4 @@
-package main
+package testdata
 
 import (
 	"fmt"
@@ -133,7 +133,7 @@ func (lg loanGenerator) initChannels() {
 	go streamRandomSliceItem(usersPath, lg.UserChnl)
 }
 
-func generateLoans(outputDir string, totalNumTxns int) {
+func GenerateLoans(outputDir string, totalNumTxns int) {
 	numDays := 365
 	txnPerFile := 100000
 	txnPerDay := int(math.Ceil(float64(totalNumTxns / numDays)))

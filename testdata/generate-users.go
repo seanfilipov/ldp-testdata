@@ -1,4 +1,4 @@
-package main
+package testdata
 
 import (
 	"math/rand"
@@ -29,7 +29,7 @@ func isActive() bool {
 	}
 }
 
-func generateUsers(outputDir string, numUsers int) {
+func GenerateUsers(outputDir string, numUsers int) {
 	chnl := make(chan interface{}, 1)
 	groupsPath := filepath.Join(outputDir, "groups.json")
 	go streamRandomSliceItem(groupsPath, chnl)
