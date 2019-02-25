@@ -3,7 +3,6 @@ package testdata
 import (
 	"fmt"
 	"math"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -25,13 +24,13 @@ type loan struct {
 }
 
 type loanGenerator struct {
-	outputDir  string
-	ItemChnl   chan interface{}
-	UserChnl   chan interface{}
-	CheckedOut map[string]loan
-	EndDay     int
-	TxnPerDay  int
-	TxnPerFile int
+	outputParams OutputParams
+	ItemChnl     chan interface{}
+	UserChnl     chan interface{}
+	CheckedOut   map[string]loan
+	EndDay       int
+	TxnPerDay    int
+	TxnPerFile   int
 }
 
 // Split loans into separate files
@@ -104,10 +103,10 @@ func (lg loanGenerator) makeLoans(startDay int) (day int, loans []interface{}) {
 func (lg loanGenerator) generateLoansSingleFile(startDay, callNum int) int {
 	reachedDay, loans := lg.makeLoans(startDay)
 	callNumStr := strconv.Itoa(callNum)
-	filepath := filepath.Join(lg.outputDir, "loans.json."+callNumStr)
-	writeSliceToFile(filepath, loans, true)
+	filename := "loans.json." + callNumStr
+	writeOutput(lg.outputParams, filename, "loans", loans)
 	totalWritten := strconv.Itoa(((callNum - 1) * lg.TxnPerFile) + len(loans))
-	fmt.Printf("Wrote %d transactions to %s (%s total)\n", len(loans), filepath, totalWritten)
+	fmt.Printf("Wrote %d transactions to %s (%s total)\n", len(loans), filename, totalWritten)
 	return reachedDay
 }
 func (lg loanGenerator) recurse(startDay, callNum int) {
@@ -126,14 +125,7 @@ func (lg loanGenerator) run() {
 	}
 }
 
-func (lg loanGenerator) initChannels() {
-	itemsPath := filepath.Join(lg.outputDir, "items.json")
-	usersPath := filepath.Join(lg.outputDir, "users.json")
-	go streamRandomSliceItem(itemsPath, lg.ItemChnl)
-	go streamRandomSliceItem(usersPath, lg.UserChnl)
-}
-
-func GenerateLoans(outputDir string, totalNumTxns int) {
+func GenerateLoans(outputParams OutputParams, totalNumTxns int) {
 	numDays := 365
 	txnPerFile := 100000
 	txnPerDay := int(math.Ceil(float64(totalNumTxns / numDays)))
@@ -141,14 +133,13 @@ func GenerateLoans(outputDir string, totalNumTxns int) {
 	numFilesNeeded := strconv.Itoa(int(math.Ceil(float64((txnPerDay * numDays) / txnPerFile))))
 	fmt.Println("Going to write ~" + numFilesNeeded + " files")
 	lg := loanGenerator{
-		outputDir,
-		make(chan interface{}, 1),
-		make(chan interface{}, 1),
+		outputParams,
+		streamRandomItem(outputParams, "items.json", "items"),
+		streamRandomItem(outputParams, "users.json", "users"),
 		make(map[string]loan),
 		numDays,
 		txnPerDay,
 		txnPerFile,
 	}
-	lg.initChannels()
 	lg.run()
 }

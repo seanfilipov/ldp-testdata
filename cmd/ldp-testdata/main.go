@@ -38,60 +38,65 @@ func main() {
 		`The directory to use for extract output. If the selected test data depends on
 other test data (e.g. 'users' depends on 'groups'), that dependency should exist
 in this directory.`)
+	dataFmtFlag := flag.String("dataFormat", "folioJSON", `The outputed data format [folioJSON|jsonArray]`)
 	numGroupsFlag := flag.Int("nGroups", 12, `The number of groups to create`)
 	numUsersFlag := flag.Int("nUsers", 30000, `The number of users to create`)
 	numLocationsFlag := flag.Int("nLocations", 20, `The number of locations to create`)
 	numLoansFlag := flag.Int("nLoans", 10000, `The number of loans to create`)
 	flag.Parse()
-	if len(flag.Args()) >= 1 {
-		mode := flag.Arg(0)
-		switch mode {
-		case "all":
-			timestampedDir := makeTimestampedDir(*dirFlag)
-			testdata.GenerateGroups(timestampedDir, *numGroupsFlag)
-			testdata.GenerateUsers(timestampedDir, *numUsersFlag)
-			testdata.GenerateLocations(timestampedDir, *numLocationsFlag)
-			testdata.GenerateItems(timestampedDir)
-			testdata.GenerateLoans(timestampedDir, *numLoansFlag)
-			testdata.GenerateCirculationLoans(timestampedDir)
-			testdata.GenerateStorageItems(timestampedDir)
-			fmt.Printf("Generated data in %s\n", timestampedDir)
 
-		case "groups":
-			timestampedDir := makeTimestampedDir(*dirFlag)
-			testdata.GenerateGroups(timestampedDir, *numGroupsFlag)
-			fmt.Printf("Generated data in %s\n", timestampedDir)
-		case "users":
-			timestampedDir := makeTimestampedDir(*dirFlag)
-			testdata.GenerateUsers(timestampedDir, *numUsersFlag)
-			fmt.Printf("Generated data in %s\n", timestampedDir)
-		case "locations":
-			timestampedDir := makeTimestampedDir(*dirFlag)
-			testdata.GenerateLocations(timestampedDir, *numLocationsFlag)
-			fmt.Printf("Generated data in %s\n", timestampedDir)
-		case "items":
-			timestampedDir := makeTimestampedDir(*dirFlag)
-			testdata.GenerateItems(timestampedDir)
-			fmt.Printf("Generated data in %s\n", timestampedDir)
-		case "loans":
-			timestampedDir := makeTimestampedDir(*dirFlag)
-			testdata.GenerateLoans(timestampedDir, *numLoansFlag)
-			fmt.Printf("Generated data in %s\n", timestampedDir)
-		case "circloans":
-			timestampedDir := makeTimestampedDir(*dirFlag)
-			testdata.GenerateCirculationLoans(timestampedDir)
-			fmt.Printf("Generated data in %s\n", timestampedDir)
-		case "storageitems":
-			timestampedDir := makeTimestampedDir(*dirFlag)
-			testdata.GenerateStorageItems(timestampedDir)
-			fmt.Printf("Generated data in %s\n", timestampedDir)
-		default:
-			fmt.Printf("Error: '%s' is not a valid argument\n", mode)
-			printUsage()
-		}
-	} else {
+	// VALIDATE ARGUMENT 'MODE' IS VALID
+	modes := map[string]bool{
+		"all":          true,
+		"groups":       true,
+		"users":        true,
+		"locations":    true,
+		"items":        true,
+		"loans":        true,
+		"circloans":    true,
+		"storageitems": true,
+	}
+	if len(flag.Args()) < 1 {
 		printUsage()
+		os.Exit(1)
+	}
+	mode := flag.Arg(0)
+	if _, ok := modes[mode]; !ok {
+		fmt.Printf("Error: '%s' is not a valid argument\n", mode)
+		printUsage()
+		os.Exit(1)
 	}
 
-	// threeGenerators()
+	// If we need to do any more validation of params, change this to a NewMake() function
+	// which does the validation
+	p := testdata.AllParams{
+		Output: testdata.OutputParams{
+			OutputDir:  makeTimestampedDir(*dirFlag),
+			DataFormat: testdata.ParseDataFmtFlag(*dataFmtFlag),
+			Indent:     true,
+		},
+		NumGroups:    *numGroupsFlag,
+		NumUsers:     *numUsersFlag,
+		NumLocations: *numLocationsFlag,
+		NumLoans:     *numLoansFlag,
+	}
+	switch mode {
+	case "all":
+		testdata.MakeAll(p)
+	case "groups":
+		testdata.GenerateGroups(p.Output, p.NumGroups)
+	case "users":
+		testdata.GenerateUsers(p.Output, p.NumUsers)
+	case "locations":
+		testdata.GenerateLocations(p.Output, p.NumLocations)
+	case "items":
+		testdata.GenerateItems(p.Output)
+	case "loans":
+		testdata.GenerateLoans(p.Output, p.NumLoans)
+	case "circloans":
+		testdata.GenerateCirculationLoans(p.Output)
+	case "storageitems":
+		testdata.GenerateStorageItems(p.Output)
+	}
+	fmt.Printf("Generated data in %s\n", p.Output.OutputDir)
 }

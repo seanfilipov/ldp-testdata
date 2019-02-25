@@ -105,7 +105,7 @@ func streamRandomLine(filename string, chnl chan string) {
 	// close(chnl)
 }
 
-// Parse the file as valid JSON
+// Parse the file as a JSON array, e.g. [{},{},...]
 func streamRandomSliceItem(filename string, chnl chan interface{}) {
 	jsonFile, _ := os.Open(filename)
 	byteValue, _ := ioutil.ReadAll(jsonFile)
@@ -119,7 +119,22 @@ func streamRandomSliceItem(filename string, chnl chan interface{}) {
 	}
 }
 
-// Linearly parse the file as valid JSON
+// Parse the file as FOLIO JSON, e.g. {keyname:[{},{},...]}
+func streamRandomFolioSliceItem(jsonKeyname, filename string, chnl chan interface{}) {
+	jsonFile, _ := os.Open(filename)
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	var result map[string]interface{}
+	json.Unmarshal(byteValue, &result)
+	jsonArray, _ := result[jsonKeyname].([]interface{})
+	for {
+		rand.Seed(time.Now().UnixNano())
+		randomNum := rand.Intn(len(jsonArray))
+		randomItem := jsonArray[randomNum]
+		chnl <- randomItem
+	}
+}
+
+// Linearly parse the file as a JSON array
 func streamSliceItem(filename string, chnl chan interface{}) {
 	jsonFile, _ := os.Open(filename)
 	byteValue, _ := ioutil.ReadAll(jsonFile)
@@ -127,6 +142,19 @@ func streamSliceItem(filename string, chnl chan interface{}) {
 	json.Unmarshal(byteValue, &result)
 	for i := 0; i < len(result); i++ {
 		chnl <- result[i]
+	}
+	close(chnl)
+}
+
+// Linearly parse the file as FOLIO JSON
+func streamFolioSliceItem(jsonKeyname, filename string, chnl chan interface{}) {
+	jsonFile, _ := os.Open(filename)
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	var result map[string]interface{}
+	json.Unmarshal(byteValue, &result)
+	jsonArray, _ := result[jsonKeyname].([]interface{})
+	for i := 0; i < len(jsonArray); i++ {
+		chnl <- jsonArray[i]
 	}
 	close(chnl)
 }

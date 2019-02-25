@@ -1,7 +1,6 @@
 package testdata
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -58,15 +57,13 @@ func makeItemsMap(filepath string) map[string]item {
 	return itemsMap
 }
 
-func GenerateCirculationLoans(outputDir string) {
+func GenerateCirculationLoans(outputParams OutputParams) {
 	var circLoans []interface{}
-	itemsPath := filepath.Join(outputDir, "items.json")
+	itemsPath := filepath.Join(outputParams.OutputDir, "items.json")
 	itemsMap := makeItemsMap(itemsPath)
-	numFiles := countLoanStorageFiles(outputDir)
+	numFiles := countLoanStorageFiles(outputParams.OutputDir)
 	for i := 1; i <= numFiles; i++ {
-		loanStorageFilepath := filepath.Join(outputDir, "loans.json."+strconv.Itoa(i))
-		loanChnl := make(chan interface{}, 1)
-		go streamSliceItem(loanStorageFilepath, loanChnl)
+		loanChnl := streamOutputLinearly(outputParams, "loans.json."+strconv.Itoa(i), "loans")
 		for oneLoan := range loanChnl {
 			var loanObj circulationLoan
 			mapstructure.Decode(oneLoan, &loanObj)
@@ -83,8 +80,6 @@ func GenerateCirculationLoans(outputDir string) {
 			}
 			circLoans = append(circLoans, loanObj)
 		}
-		filepath := filepath.Join(outputDir, "circloan.json."+strconv.Itoa(i))
-		fmt.Println("Writing", filepath)
-		writeSliceToFile(filepath, circLoans, true)
+		writeOutput(outputParams, "circloan.json."+strconv.Itoa(i), "loans", circLoans)
 	}
 }

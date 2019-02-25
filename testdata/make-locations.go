@@ -1,8 +1,6 @@
 package testdata
 
 import (
-	"path/filepath"
-
 	"github.com/icrowley/fake"
 	uuid "github.com/satori/go.uuid"
 )
@@ -12,7 +10,7 @@ type location struct {
 	ID   string `json:"id"`
 }
 
-func GenerateLocations(outputDir string, numLocations int) {
+func GenerateLocations(outputParams OutputParams, numLocations int) {
 	makeLocation := func() location {
 		return location{
 			Name: fake.LastName() + " Library",
@@ -24,6 +22,5 @@ func GenerateLocations(outputDir string, numLocations int) {
 		l := makeLocation()
 		locations = append(locations, l)
 	}
-	filepath := filepath.Join(outputDir, "locations.json")
-	writeSliceToFile(filepath, locations, true)
+	writeOutput(outputParams, "locations.json", "locations", locations)
 }

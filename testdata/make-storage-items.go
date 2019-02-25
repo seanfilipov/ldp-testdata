@@ -3,7 +3,6 @@ package testdata
 import (
 	"fmt"
 	"math/rand"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -31,14 +30,12 @@ func randomCopyNumbers() []string {
 	return []string{strconv.Itoa(random(1, 5))}
 }
 
-// StorageItems share the same information with inventory items
+// GenerateStorageItems creates items that share the same information with inventory items
 // (ID, holdingsRecordId, barcode)
-func GenerateStorageItems(outputDir string) {
+func GenerateStorageItems(outputParams OutputParams) {
 	rand.Seed(time.Now().UnixNano())
 	var storageItems []interface{}
-	itemsPath := filepath.Join(outputDir, "items.json")
-	itemsChnl := make(chan interface{}, 1)
-	go streamSliceItem(itemsPath, itemsChnl)
+	itemsChnl := streamOutputLinearly(outputParams, "items.json", "items")
 	for oneItem := range itemsChnl {
 		var itemObj item
 		mapstructure.Decode(oneItem, &itemObj)
@@ -52,6 +49,5 @@ func GenerateStorageItems(outputDir string) {
 		}
 		storageItems = append(storageItems, oneStorageItem)
 	}
-	filepath := filepath.Join(outputDir, "storageItems.json")
-	writeFolioSliceToFile("items", filepath, storageItems, true)
+	writeOutput(outputParams, "storageItems.json", "items", storageItems)
 }
