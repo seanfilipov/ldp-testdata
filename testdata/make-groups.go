@@ -1,7 +1,6 @@
 package testdata
 
 import (
-	"path/filepath"
 	"strconv"
 
 	uuid "github.com/satori/go.uuid"
@@ -20,7 +19,7 @@ type group struct {
 	Metadata groupMetadata `json:"metadata"`
 }
 
-func GenerateGroups(outputDir string, numGroups int) {
+func GenerateGroups(outputParams OutputParams, numGroups int) {
 	groupNames := []string{
 		"Freshman", "Sophomore", "Junior", "Senior", "Graduate", "Alumni", "Faculty",
 		"Staff", "Affiliate_A", "Affiliate_B", "Affiliate_C", "Affiliate_D",
@@ -44,7 +43,7 @@ func GenerateGroups(outputDir string, numGroups int) {
 		groupNames = groupNames[:numGroups]
 		groupDesc = groupDesc[:numGroups]
 	}
-	makeGroup := func(i int) group {
+	newGroup := func(i int) group {
 		creator := uuid.Must(uuid.NewV4()).String()
 		return group{
 			Group: groupNames[i],
@@ -60,9 +59,8 @@ func GenerateGroups(outputDir string, numGroups int) {
 
 	var groups []interface{}
 	for i := 0; i < len(groupNames); i++ {
-		g := makeGroup(i)
+		g := newGroup(i)
 		groups = append(groups, g)
 	}
-	filepath := filepath.Join(outputDir, "groups.json")
-	writeSliceToFile(filepath, groups, true)
+	writeOutput(outputParams, "groups.json", "usergroups", groups)
 }
