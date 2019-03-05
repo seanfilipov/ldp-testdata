@@ -1,14 +1,16 @@
 package testdata
 
 import (
-	"fmt"
 	"math"
 	"strconv"
 	"time"
 
+	"github.com/folio-org/ldp-testdata/logging"
 	"github.com/mitchellh/mapstructure"
 	uuid "github.com/satori/go.uuid"
 )
+
+var logger = logging.Logger
 
 type loanStatus struct {
 	Name string `json:"name"`
@@ -106,7 +108,7 @@ func (lg loanGenerator) generateLoansSingleFile(startDay, callNum int) int {
 	filename := "loans.json." + callNumStr
 	writeOutput(lg.outputParams, filename, "loans", loans)
 	totalWritten := strconv.Itoa(((callNum - 1) * lg.TxnPerFile) + len(loans))
-	fmt.Printf("Wrote %d transactions to %s (%s total)\n", len(loans), filename, totalWritten)
+	logger.Debugf("Wrote %d transactions to %s (%s total)\n", len(loans), filename, totalWritten)
 	return reachedDay
 }
 func (lg loanGenerator) recurse(startDay, callNum int) {
@@ -121,7 +123,7 @@ func (lg loanGenerator) run() {
 	for reachedDay != lg.EndDay {
 		runCount++
 		reachedDay = lg.generateLoansSingleFile(reachedDay, runCount)
-		fmt.Printf("Run #%d: reached day %d\n", runCount, reachedDay)
+		logger.Debugf("Run #%d: reached day %d\n", runCount, reachedDay)
 	}
 }
 
@@ -131,7 +133,7 @@ func GenerateLoans(outputParams OutputParams, totalNumTxns int) {
 	txnPerDay := int(math.Ceil(float64(totalNumTxns / numDays)))
 
 	numFilesNeeded := strconv.Itoa(int(math.Ceil(float64((txnPerDay * numDays) / txnPerFile))))
-	fmt.Println("Going to write ~" + numFilesNeeded + " files")
+	logger.Debug("Going to write ~" + numFilesNeeded + " files")
 	lg := loanGenerator{
 		outputParams,
 		streamRandomItem(outputParams, "items.json", "items"),

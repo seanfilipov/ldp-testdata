@@ -2,7 +2,6 @@ package testdata
 
 import (
 	"io/ioutil"
-	"log"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -32,7 +31,7 @@ type circulationLoan struct {
 func countLoanStorageFiles(filepath string) (numMatching int) {
 	files, err := ioutil.ReadDir(filepath)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	for _, f := range files {
