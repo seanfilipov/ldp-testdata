@@ -7,8 +7,11 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/folio-org/ldp-testdata/logging"
 	"github.com/folio-org/ldp-testdata/testdata"
 )
+
+var logger = logging.Logger
 
 func makeTimestampedDir(dirFlag string) string {
 	if dirFlag != "" {
@@ -31,6 +34,7 @@ func printUsage() {
 }
 
 func main() {
+	logging.Init()
 	flag.Usage = func() {
 		printUsage()
 	}
@@ -38,7 +42,7 @@ func main() {
 		`The directory to use for extract output. If the selected test data depends on
 other test data (e.g. 'users' depends on 'groups'), that dependency should exist
 in this directory.`)
-	dataFmtFlag := flag.String("dataFormat", "folioJSON", `The outputed data format [folioJSON|jsonArray]`)
+	dataFmtFlag := flag.String("dataFormat", "folioJSON", `The outputted data format [folioJSON|jsonArray]`)
 	numGroupsFlag := flag.Int("nGroups", 12, `The number of groups to create`)
 	numUsersFlag := flag.Int("nUsers", 30000, `The number of users to create`)
 	numLocationsFlag := flag.Int("nLocations", 20, `The number of locations to create`)
@@ -98,5 +102,5 @@ in this directory.`)
 	case "storageitems":
 		testdata.GenerateStorageItems(p.Output)
 	}
-	fmt.Printf("Generated data in %s\n", p.Output.OutputDir)
+	logger.Infof("Generated data in %s\n", p.Output.OutputDir)
 }
