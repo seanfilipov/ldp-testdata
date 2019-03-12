@@ -8,40 +8,63 @@ terms of the Apache License, Version 2.0.  See the file
 more information.
 
 
+Prerequisites
+-------------------
+
+* [Go](https://golang.org) 1.10 or later
+
 Overview
 --------
 
 This purpose of this repo is to generate large amounts of fake FOLIO data to support the LDP analytics team.
 
-**This software is under active development, and no database schema
-migrations are currently provided.  Use this software only for testing
-purposes.**
-
-
-System requirements
--------------------
-
-* [Go](https://golang.org) 1.10 or later
-
-
-Installing the software
------------------------
-
-First ensure that the `GOPATH` environment variable specifies a path
-that can serve as your Go workspace directory, the place where this
-software and other Go packages will be installed.  For example, to set
-it to `$HOME/go`:
+To download and compile:
 
 ```shell
-$ export GOPATH=$HOME/go
+go get github.com/folio-org/ldp-testdata
+cd ldp-testdata/cmd/ldp-testdata
+go build
+cd ../..
 ```
 
-Then to download and compile the software:
+To run:
+```shell
+cmd/ldp-testdata/ldp-testdata all
+```
+
+Usage
+--------
+```
+cmd/ldp-testdata/ldp-testdata
+Usage:
+./ldp-testdata FLAGS [all|groups|users|locations|items|loans|circloans|storageitems]
+  where FLAGS include:
+  -dataFormat string
+    	The outputted data format [folioJSON|jsonArray] (default "folioJSON")
+  -dir string
+    	The directory to use for extract output. If the selected test data depends on
+    	other test data (e.g. 'users' depends on 'groups'), that dependency should exist
+    	in this directory.
+  -nGroups int
+    	The number of groups to create (default 12)
+  -nLoans int
+    	The number of loans to create (default 10000)
+  -nLocations int
+    	The number of locations to create (default 20)
+  -nUsers int
+    	The number of users to create (default 30000)
+```
+
+Typically, you will want to run `ldp-testdata all` to generate all data. You can tweak the parameters
+using the options, e.g.
 
 ```shell
-$ go get -u github.com/folio-org/ldp-testdata/cmd/ldp-testdata
+ldp-testdata -nUsers=50000 -nGroups=20 -nLoans=800000 -dir=./myOutput all
 ```
 
-The compiled executable file, `ldp-testdata`, should appear in `$GOPATH/bin/`.  
+You can specify the same directory as a previous run to overwrite one type of data:
+```shell
+ldp-testdata -dir=./myOutput nUsers=20000 users
+```
 
-
+**This software is under active development. Use this software only for testing purposes.**
