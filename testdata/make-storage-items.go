@@ -6,8 +6,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/icrowley/fake"
+	uuid "github.com/satori/go.uuid"
 )
+
+type itemStatus struct {
+	Name string `json:"name"`
+}
 
 type storageItem struct {
 	ID               string     `json:"id"`
@@ -30,23 +35,21 @@ func randomCopyNumbers() []string {
 	return []string{strconv.Itoa(random(1, 5))}
 }
 
-// GenerateStorageItems creates items that share the same information with inventory items
-// (ID, holdingsRecordId, barcode)
-func GenerateStorageItems(outputParams OutputParams) {
+func GenerateStorageItems(outputParams OutputParams, numItems int) {
 	rand.Seed(time.Now().UnixNano())
-	var storageItems []interface{}
-	itemsChnl := streamOutputLinearly(outputParams, "items.json", "items")
-	for oneItem := range itemsChnl {
-		var itemObj item
-		mapstructure.Decode(oneItem, &itemObj)
-		oneStorageItem := storageItem{
-			ID:               itemObj.ID,
-			HoldingsRecordID: itemObj.HoldingsRecordID,
-			Barcode:          itemObj.Barcode,
-			Status:           itemObj.Status,
+	makeStorageItem := func() storageItem {
+		return storageItem{
+			ID:               uuid.Must(uuid.NewV4()).String(),
+			HoldingsRecordID: uuid.Must(uuid.NewV4()).String(),
+			Barcode:          fake.DigitsN(16),
+			Status:           itemStatus{Name: "Available"},
 			Enumeration:      randomEnumeration(),
 			CopyNumbers:      randomCopyNumbers(),
 		}
+	}
+	var storageItems []interface{}
+	for i := 0; i < numItems; i++ {
+		oneStorageItem := makeStorageItem()
 		storageItems = append(storageItems, oneStorageItem)
 	}
 	writeOutput(outputParams, "storageItems.json", "items", storageItems)

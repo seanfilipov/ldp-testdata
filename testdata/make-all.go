@@ -19,6 +19,7 @@ type AllParams struct {
 	NumGroups    int
 	NumUsers     int
 	NumLocations int
+	NumItems     int
 	NumLoans     int
 }
 
@@ -26,10 +27,8 @@ func MakeAll(p AllParams) {
 	GenerateGroups(p.Output, p.NumGroups)
 	GenerateUsers(p.Output, p.NumUsers)
 	GenerateLocations(p.Output, p.NumLocations)
-	GenerateItems(p.Output)
+	GenerateStorageItems(p.Output, p.NumItems)
 	GenerateLoans(p.Output, p.NumLoans)
-	GenerateCirculationLoans(p.Output)
-	GenerateStorageItems(p.Output)
 }
 
 func writeOutput(params OutputParams, filename, jsonKeyname string, slice []interface{}) {

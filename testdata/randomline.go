@@ -121,7 +121,12 @@ func streamRandomSliceItem(filename string, chnl chan interface{}) {
 
 // Parse the file as FOLIO JSON, e.g. {keyname:[{},{},...]}
 func streamRandomFolioSliceItem(jsonKeyname, filename string, chnl chan interface{}) {
-	jsonFile, _ := os.Open(filename)
+	jsonFile, errOpeningFile := os.Open(filename)
+	if errOpeningFile != nil {
+		logger.Error(errOpeningFile)
+		chnl <- errOpeningFile
+		return
+	}
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	var result map[string]interface{}
 	json.Unmarshal(byteValue, &result)

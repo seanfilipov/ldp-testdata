@@ -46,6 +46,7 @@ in this directory.`)
 	numGroupsFlag := flag.Int("nGroups", 12, `The number of groups to create`)
 	numUsersFlag := flag.Int("nUsers", 30000, `The number of users to create`)
 	numLocationsFlag := flag.Int("nLocations", 20, `The number of locations to create`)
+	numItemsFlag := flag.Int("nItems", 10000, `The number of items to create`)
 	numLoansFlag := flag.Int("nLoans", 10000, `The number of loans to create`)
 	flag.Parse()
 
@@ -55,9 +56,7 @@ in this directory.`)
 		"groups":       true,
 		"users":        true,
 		"locations":    true,
-		"items":        true,
 		"loans":        true,
-		"circloans":    true,
 		"storageitems": true,
 	}
 	if len(flag.Args()) < 1 {
@@ -71,7 +70,7 @@ in this directory.`)
 		os.Exit(1)
 	}
 
-	// If we need to do any more validation of params, change this to a NewMake() function
+	// If we need to do any more validation of params, change this to a NewParams() function
 	// which does the validation
 	p := testdata.AllParams{
 		Output: testdata.OutputParams{
@@ -82,6 +81,7 @@ in this directory.`)
 		NumGroups:    *numGroupsFlag,
 		NumUsers:     *numUsersFlag,
 		NumLocations: *numLocationsFlag,
+		NumItems:     *numItemsFlag,
 		NumLoans:     *numLoansFlag,
 	}
 	switch mode {
@@ -93,14 +93,10 @@ in this directory.`)
 		testdata.GenerateUsers(p.Output, p.NumUsers)
 	case "locations":
 		testdata.GenerateLocations(p.Output, p.NumLocations)
-	case "items":
-		testdata.GenerateItems(p.Output)
+	case "storageitems":
+		testdata.GenerateStorageItems(p.Output, p.NumItems)
 	case "loans":
 		testdata.GenerateLoans(p.Output, p.NumLoans)
-	case "circloans":
-		testdata.GenerateCirculationLoans(p.Output)
-	case "storageitems":
-		testdata.GenerateStorageItems(p.Output)
 	}
 	logger.Infof("Generated data in %s\n", p.Output.OutputDir)
 }
