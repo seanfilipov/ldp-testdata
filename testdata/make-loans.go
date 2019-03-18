@@ -2,6 +2,7 @@ package testdata
 
 import (
 	"math"
+	"os"
 	"strconv"
 	"time"
 
@@ -43,10 +44,18 @@ type loanGenerator struct {
 // Otherwise, check it out
 func (lg loanGenerator) makeLoanTxn(date time.Time, itemID string) (retLoan loan) {
 	if itemID == "" {
-		randomItem, _ := <-lg.ItemChnl
-		var itemObj item
+		randomItem, ok := <-lg.ItemChnl
+		if !ok {
+			logger.Error("Could not get item from channel")
+		}
+		var itemObj storageItem
 		mapstructure.Decode(randomItem, &itemObj)
 		itemID = itemObj.ID
+		if itemID == "" {
+			close(lg.ItemChnl)
+			logger.Errorf("Item received from channel has no ID field: %s", randomItem)
+			os.Exit(1)
+		}
 	}
 	if checkedOutLoan, ok := lg.CheckedOut[itemID]; ok {
 		retLoan = checkedOutLoan
@@ -136,7 +145,7 @@ func GenerateLoans(outputParams OutputParams, totalNumTxns int) {
 	logger.Debug("Going to write ~" + numFilesNeeded + " files")
 	lg := loanGenerator{
 		outputParams,
-		streamRandomItem(outputParams, "items.json", "items"),
+		streamRandomItem(outputParams, "storageItems.json", "items"),
 		streamRandomItem(outputParams, "users.json", "users"),
 		make(map[string]loan),
 		numDays,

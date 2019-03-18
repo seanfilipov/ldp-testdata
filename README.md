@@ -47,6 +47,8 @@ Usage:
     	in this directory.
   -nGroups int
     	The number of groups to create (default 12)
+  -nItems int
+    	The number of items to create (default 10000)
   -nLoans int
     	The number of loans to create (default 10000)
   -nLocations int
