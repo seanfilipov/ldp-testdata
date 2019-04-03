@@ -28,6 +28,8 @@ type loan struct {
 
 type loanGenerator struct {
 	outputParams OutputParams
+	Filename     string
+	ObjectKey    string
 	ItemChnl     chan interface{}
 	UserChnl     chan interface{}
 	CheckedOut   map[string]loan
@@ -114,8 +116,8 @@ func (lg loanGenerator) makeLoans(startDay int) (day int, loans []interface{}) {
 func (lg loanGenerator) generateLoansSingleFile(startDay, callNum int) int {
 	reachedDay, loans := lg.makeLoans(startDay)
 	callNumStr := strconv.Itoa(callNum)
-	filename := "loans.json." + callNumStr
-	writeOutput(lg.outputParams, filename, "loans", loans)
+	filename := lg.Filename + "." + callNumStr
+	writeOutput(lg.outputParams, filename, lg.ObjectKey, loans)
 	totalWritten := strconv.Itoa(((callNum - 1) * lg.TxnPerFile) + len(loans))
 	logger.Debugf("Wrote %d transactions to %s (%s total)\n", len(loans), filename, totalWritten)
 	return reachedDay
@@ -126,14 +128,16 @@ func (lg loanGenerator) recurse(startDay, callNum int) {
 		lg.recurse(reachedDay, callNum+1)
 	}
 }
-func (lg loanGenerator) run() {
+func (lg loanGenerator) run() (counter int) {
 	runCount := 0
 	reachedDay := 0
 	for reachedDay != lg.EndDay {
 		runCount++
 		reachedDay = lg.generateLoansSingleFile(reachedDay, runCount)
 		logger.Debugf("Run #%d: reached day %d\n", runCount, reachedDay)
+		counter++
 	}
+	return
 }
 
 func GenerateLoans(outputParams OutputParams, totalNumTxns int) {
@@ -143,8 +147,12 @@ func GenerateLoans(outputParams OutputParams, totalNumTxns int) {
 
 	numFilesNeeded := strconv.Itoa(int(math.Ceil(float64((txnPerDay * numDays) / txnPerFile))))
 	logger.Debug("Going to write ~" + numFilesNeeded + " files")
+	filename := "loans.json"
+	objKey := "loans"
 	lg := loanGenerator{
 		outputParams,
+		filename,
+		objKey,
 		streamRandomItem(outputParams, "storageItems.json", "items"),
 		streamRandomItem(outputParams, "users.json", "users"),
 		make(map[string]loan),
@@ -152,5 +160,13 @@ func GenerateLoans(outputParams OutputParams, totalNumTxns int) {
 		txnPerDay,
 		txnPerFile,
 	}
-	lg.run()
+	numFiles := lg.run()
+	updateManifest(fileDef{
+		Module:    "mod-circulation-storage",
+		Path:      "/loan-storage/loans",
+		Filename:  filename,
+		ObjectKey: objKey,
+		NumFiles:  numFiles,
+		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-circulation-storage/loan-storage.html",
+	}, outputParams)
 }

@@ -49,5 +49,16 @@ func GenerateUsers(outputParams OutputParams, numUsers int) {
 		u := makeUser()
 		users = append(users, u)
 	}
-	writeOutput(outputParams, "users.json", "users", users)
+	filename := "users.json"
+	objKey := "users"
+	writeOutput(outputParams, filename, objKey, users)
+
+	updateManifest(fileDef{
+		Module:    "mod-users",
+		Path:      "/users",
+		Filename:  filename,
+		ObjectKey: objKey,
+		NumFiles:  1,
+		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-users/users.html",
+	}, outputParams)
 }

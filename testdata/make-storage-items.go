@@ -52,5 +52,16 @@ func GenerateStorageItems(outputParams OutputParams, numItems int) {
 		oneStorageItem := makeStorageItem()
 		storageItems = append(storageItems, oneStorageItem)
 	}
-	writeOutput(outputParams, "storageItems.json", "items", storageItems)
+	filename := "storageItems.json"
+	objKey := "items"
+	writeOutput(outputParams, filename, objKey, storageItems)
+
+	updateManifest(fileDef{
+		Module:    "mod-inventory-storage",
+		Path:      "/item-storage/items",
+		Filename:  filename,
+		ObjectKey: objKey,
+		NumFiles:  1,
+		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/item-storage.html",
+	}, outputParams)
 }
