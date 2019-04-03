@@ -22,5 +22,17 @@ func GenerateLocations(outputParams OutputParams, numLocations int) {
 		l := makeLocation()
 		locations = append(locations, l)
 	}
-	writeOutput(outputParams, "locations.json", "locations", locations)
+
+	filename := "locations.json"
+	objKey := "locations"
+	writeOutput(outputParams, filename, objKey, locations)
+
+	updateManifest(fileDef{
+		Module:    "mod-inventory-storage",
+		Path:      "/locations",
+		Filename:  filename,
+		ObjectKey: objKey,
+		NumFiles:  1,
+		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/location.html",
+	}, outputParams)
 }

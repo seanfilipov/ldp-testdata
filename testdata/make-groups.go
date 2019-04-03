@@ -62,5 +62,16 @@ func GenerateGroups(outputParams OutputParams, numGroups int) {
 		g := newGroup(i)
 		groups = append(groups, g)
 	}
-	writeOutput(outputParams, "groups.json", "usergroups", groups)
+	filename := "groups.json"
+	objKey := "usergroups"
+	writeOutput(outputParams, filename, objKey, groups)
+
+	updateManifest(fileDef{
+		Module:    "mod-users",
+		Path:      "/groups",
+		Filename:  filename,
+		ObjectKey: objKey,
+		NumFiles:  1,
+		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-users/groups.html",
+	}, outputParams)
 }
