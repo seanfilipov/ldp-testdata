@@ -37,7 +37,7 @@ Usage
 ```
 cmd/ldp-testdata/ldp-testdata
 Usage:
-./ldp-testdata FLAGS [all|groups|users|locations|items|loans|circloans|storageitems]
+./ldp-testdata FLAGS [all|groups|users|locations|loans|storageitems]
   where FLAGS include:
   -dataFormat string
     	The outputted data format [folioJSON|jsonArray] (default "folioJSON")
