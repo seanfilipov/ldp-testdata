@@ -28,7 +28,7 @@ func makeTimestampedDir(dirFlag string) string {
 
 func printUsage() {
 	fmt.Println("Usage:")
-	fmt.Println("./ldp-testdata FLAGS [all|groups|users|locations|items|loans|circloans|storageitems]")
+	fmt.Println("./ldp-testdata FLAGS [all|groups|users|locations|loans|storageitems]")
 	fmt.Println("  where FLAGS include:")
 	flag.PrintDefaults() // Print the flag help strings
 }
