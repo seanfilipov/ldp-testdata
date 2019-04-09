@@ -14,33 +14,87 @@
         height: 100px;
       }
       .filedefBox {
-        height: 50px;
         min-width: 100px;
         float: left;
         background-color: #fff;
-        padding: 5px;
+        border: 1px solid #ccc;
+        padding: 15px 5px;
         margin: 5px;
+      }
+      .selected {
+        background-color: #e0f5ff;
+        border: 1px solid #88c3ff;
+      }
+      #mockheader {
+        display: flex;
+        height: 50px;
+        align-content: center;
+        justify-content: flex-start;
+      }
+      #mockheader h3 { 
+        line-height: 50px;
+        margin: 0;
+      }
+      #mockfile {
+        line-height: 50px;
+        margin: 0;
+        padding-left: 10px;
+        font-size: 0.9em;
+        color: #777;
+        background-color: #eee;
+        border-bottom: 1px solid #ccc;
+      }
+      #mockdata {
+        margin: 0;
+        padding: 10px;
+        white-space: pre-wrap;
+        font-size: 0.9em;
+        background-color: #eee;
       }
     </style>
     <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/base-min.css">
+    <script>
+      var lastSelected
+
+      function testdataFetch(elmt, filename, objectKey) {
+        if(lastSelected) lastSelected.classList.remove('selected')
+        elmt.className += ' selected'
+        lastSelected = elmt
+        document.getElementById('mockfile').textContent = '...'
+        document.getElementById('mockdata').textContent = ''
+
+        fetch('/fake/'+filename)
+          .then(response => response.json())
+          .then(resp => {
+            var data = JSON.parse(resp.data)
+            var twenty = data[objectKey].slice(0,20)
+            document.getElementById('mockfile').textContent = resp.file
+            document.getElementById('mockdata').textContent = JSON.stringify(twenty, null, 2)
+          })
+      }
+    </script>
   </head>
-  <body>
+  <body onload="document.querySelector('.filedefBox').click()">
     
     <div class="wrapper">
       <div class="content">
         <h1>ldp-testdata</h1>
         <p>This tool generates fake FOLIO data to support data analysis of future real FOLIO environments.</p>
         
-        <h3>Input</h3>
+        <h3>API</h3>
         <div class="filedefsBox">
           {{#defs}}
-            <div class="filedefBox">
-              <span>{{path}}</span>
+            <div class="filedefBox" onclick="testdataFetch(this, '{{filename}}', '{{objectKey}}')">
+              {{path}}
             </div>
           {{/defs}}
         </div>
 
-        <h3>Output</h3>
+        <div id='mockheader'>
+          <h3>Simulated Data</h3>
+        </div>
+        <pre id='mockfile'></pre>
+        <pre id='mockdata'></pre>
       </div>
     </div>
 
