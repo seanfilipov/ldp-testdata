@@ -140,7 +140,8 @@ func (lg loanGenerator) run() (counter int) {
 	return
 }
 
-func GenerateLoans(outputParams OutputParams, totalNumTxns int) {
+func GenerateLoans(allParams AllParams, totalNumTxns int) {
+	outputParams := allParams.Output
 	numDays := 365
 	txnPerFile := 100000
 	txnPerDay := int(math.Ceil(float64(totalNumTxns / numDays)))
@@ -161,7 +162,7 @@ func GenerateLoans(outputParams OutputParams, totalNumTxns int) {
 		txnPerFile,
 	}
 	numFiles := lg.run()
-	updateManifest(fileDef{
+	updateManifest(FileDef{
 		Module:    "mod-circulation-storage",
 		Path:      "/loan-storage/loans",
 		Filename:  filename,

@@ -27,8 +27,8 @@ func isActive() bool {
 	return false
 }
 
-func GenerateUsers(outputParams OutputParams, numUsers int) {
-	chnl := streamRandomItem(outputParams, "groups.json", "usergroups")
+func GenerateUsers(allParams AllParams, numUsers int) {
+	chnl := streamRandomItem(allParams.Output, "groups.json", "usergroups")
 	makeUser := func() user {
 		randomGroup, _ := <-chnl
 		randomGroupMap := randomGroup.(map[string]interface{})
@@ -51,14 +51,14 @@ func GenerateUsers(outputParams OutputParams, numUsers int) {
 	}
 	filename := "users.json"
 	objKey := "users"
-	writeOutput(outputParams, filename, objKey, users)
+	writeOutput(allParams.Output, filename, objKey, users)
 
-	updateManifest(fileDef{
+	updateManifest(FileDef{
 		Module:    "mod-users",
 		Path:      "/users",
 		Filename:  filename,
 		ObjectKey: objKey,
 		NumFiles:  1,
 		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-users/users.html",
-	}, outputParams)
+	}, allParams.Output)
 }

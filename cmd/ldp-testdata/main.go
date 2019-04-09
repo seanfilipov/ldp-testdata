@@ -9,6 +9,7 @@ import (
 
 	"github.com/folio-org/ldp-testdata/logging"
 	"github.com/folio-org/ldp-testdata/testdata"
+	"github.com/folio-org/ldp-testdata/web"
 )
 
 var logger = logging.Logger
@@ -38,10 +39,12 @@ func main() {
 	flag.Usage = func() {
 		printUsage()
 	}
+	openBrowser := flag.Bool("openBrowser", true, "Whether to open a web browser to the UI")
 	dirFlag := flag.String("dir", "",
 		`The directory to use for extract output. If the selected test data depends on
 other test data (e.g. 'users' depends on 'groups'), that dependency should exist
 in this directory.`)
+	fileDefsFlag := flag.String("fileDefs", "", "The filepath of the JSON file definitions")
 	dataFmtFlag := flag.String("dataFormat", "folioJSON", `The outputted data format [folioJSON|jsonArray]`)
 	numGroupsFlag := flag.Int("nGroups", 12, `The number of groups to create`)
 	numUsersFlag := flag.Int("nUsers", 30000, `The number of users to create`)
@@ -59,6 +62,9 @@ in this directory.`)
 		"loans":        true,
 		"storageitems": true,
 	}
+	fileDefs := testdata.ParseFileDefs(*fileDefsFlag)
+	web.Run(*openBrowser, fileDefs)
+
 	if len(flag.Args()) < 1 {
 		printUsage()
 		os.Exit(1)
@@ -69,10 +75,10 @@ in this directory.`)
 		printUsage()
 		os.Exit(1)
 	}
-
 	// If we need to do any more validation of params, change this to a NewParams() function
 	// which does the validation
 	p := testdata.AllParams{
+		FileDefs: fileDefs,
 		Output: testdata.OutputParams{
 			OutputDir:  makeTimestampedDir(*dirFlag),
 			DataFormat: testdata.ParseDataFmtFlag(*dataFmtFlag),
@@ -84,19 +90,20 @@ in this directory.`)
 		NumItems:     *numItemsFlag,
 		NumLoans:     *numLoansFlag,
 	}
+
 	switch mode {
 	case "all":
 		testdata.MakeAll(p)
 	case "groups":
-		testdata.GenerateGroups(p.Output, p.NumGroups)
+		testdata.GenerateGroups(p, p.NumGroups)
 	case "users":
-		testdata.GenerateUsers(p.Output, p.NumUsers)
+		testdata.GenerateUsers(p, p.NumUsers)
 	case "locations":
-		testdata.GenerateLocations(p.Output, p.NumLocations)
+		testdata.GenerateLocations(p, p.NumLocations)
 	case "storageitems":
-		testdata.GenerateStorageItems(p.Output, p.NumItems)
+		testdata.GenerateStorageItems(p, p.NumItems)
 	case "loans":
-		testdata.GenerateLoans(p.Output, p.NumLoans)
+		testdata.GenerateLoans(p, p.NumLoans)
 	}
 	logger.Infof("Generated data in %s\n", p.Output.OutputDir)
 }

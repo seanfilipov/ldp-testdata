@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ldp-testdata</title>
+    <style>
+      body {
+        background-color: #ddd;
+      }
+      .wrapper {
+        width: 900px;
+        margin: 0 auto;
+      }
+      .filedefsBox {
+        height: 100px;
+      }
+      .filedefBox {
+        height: 50px;
+        min-width: 100px;
+        float: left;
+        background-color: #fff;
+        padding: 5px;
+        margin: 5px;
+      }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/base-min.css">
+  </head>
+  <body>
+    
+    <div class="wrapper">
+      <div class="content">
+        <h1>ldp-testdata</h1>
+        <p>This tool generates fake FOLIO data to support data analysis of future real FOLIO environments.</p>
+        
+        <h3>Input</h3>
+        <div class="filedefsBox">
+          {{#defs}}
+            <div class="filedefBox">
+              <span>{{path}}</span>
+            </div>
+          {{/defs}}
+        </div>
+
+        <h3>Output</h3>
+      </div>
+    </div>
+
+  </body>
+</html>
+ 

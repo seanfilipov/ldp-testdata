@@ -1,6 +1,11 @@
 package testdata
 
-import "path/filepath"
+import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+)
 
 type DataFmt int
 
@@ -15,6 +20,7 @@ type OutputParams struct {
 	Indent     bool
 }
 type AllParams struct {
+	FileDefs     []FileDef
 	Output       OutputParams
 	NumGroups    int
 	NumUsers     int
@@ -23,12 +29,25 @@ type AllParams struct {
 	NumLoans     int
 }
 
+// ParseFileDefs reads the fileDefs.json file and returns a slice of fileDefs
+func ParseFileDefs(filepath string) (fileDefs []FileDef) {
+	if filepath != "" {
+		jsonFile, errOpenFile := os.Open(filepath)
+		if errOpenFile != nil {
+			panic(errOpenFile)
+		}
+		byteValue, _ := ioutil.ReadAll(jsonFile)
+		json.Unmarshal(byteValue, &fileDefs)
+	}
+	return
+}
+
 func MakeAll(p AllParams) {
-	GenerateGroups(p.Output, p.NumGroups)
-	GenerateUsers(p.Output, p.NumUsers)
-	GenerateLocations(p.Output, p.NumLocations)
-	GenerateStorageItems(p.Output, p.NumItems)
-	GenerateLoans(p.Output, p.NumLoans)
+	GenerateGroups(p, p.NumGroups)
+	GenerateUsers(p, p.NumUsers)
+	GenerateLocations(p, p.NumLocations)
+	GenerateStorageItems(p, p.NumItems)
+	GenerateLoans(p, p.NumLoans)
 }
 
 func writeOutput(params OutputParams, filename, jsonKeyname string, slice []interface{}) {

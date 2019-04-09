@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-type fileDef struct {
+type FileDef struct {
 	Module    string `json:"module"`    // the module
 	Path      string `json:"path"`      // API route simulated
 	Filename  string `json:"filename"`  // the output filename
@@ -16,7 +16,7 @@ type fileDef struct {
 	Doc       string `json:"doc"`       // URL to the API documentation
 }
 
-func toInterface(originals []fileDef) []interface{} {
+func toInterface(originals []FileDef) []interface{} {
 	newThings := make([]interface{}, len(originals))
 	for i, s := range originals {
 		newThings[i] = s
@@ -24,7 +24,7 @@ func toInterface(originals []fileDef) []interface{} {
 	return newThings
 }
 
-func updateManifest(def fileDef, params OutputParams) {
+func updateManifest(def FileDef, params OutputParams) {
 	filepath := filepath.Join(params.OutputDir, "manifest.json")
 
 	jsonFile, errOpeningFile := os.Open(filepath)
@@ -40,7 +40,7 @@ func updateManifest(def fileDef, params OutputParams) {
 		if err != nil {
 			panic(err)
 		}
-		var defs []fileDef
+		var defs []FileDef
 		json.Unmarshal(byteValue, &defs)
 		foundTarget := false
 		for i := 0; i < len(defs); i++ {

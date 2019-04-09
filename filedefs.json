@@ -1,0 +1,37 @@
+[
+  {
+      "module": "mod-users",
+      "path": "/groups",
+      "filename": "groups.json",
+      "objectKey": "usergroups",
+      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-users/groups.html"
+  },
+  {
+      "module": "mod-users",
+      "path": "/users",
+      "filename": "users.json",
+      "objectKey": "users",
+      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-users/users.html"
+  },
+  {
+      "module": "mod-inventory-storage",
+      "path": "/locations",
+      "filename": "locations.json",
+      "objectKey": "locations",
+      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/location.html"
+  },
+  {
+      "module": "mod-inventory-storage",
+      "path": "/item-storage/items",
+      "filename": "storageItems.json",
+      "objectKey": "items",
+      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/item-storage.html"
+  },
+  {
+      "module": "mod-circulation-storage",
+      "path": "/loan-storage/loans",
+      "filename": "loans.json",
+      "objectKey": "loans",
+      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-circulation-storage/loan-storage.html"
+  }
+]
