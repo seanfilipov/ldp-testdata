@@ -18,55 +18,42 @@ Overview
 
 This purpose of this repo is to generate large amounts of fake FOLIO data to support the LDP analytics team.
 
-To download and compile:
+To download:
 
 ```shell
 go get github.com/folio-org/ldp-testdata
-cd ldp-testdata/cmd/ldp-testdata
-go build
-cd ../..
 ```
 
 To run:
 ```shell
-cmd/ldp-testdata/ldp-testdata all
+go run ./cmd/ldp-testdata/main.go
 ```
 
 Usage
 --------
 ```
-cmd/ldp-testdata/ldp-testdata
-Usage:
-./ldp-testdata FLAGS [all|groups|users|locations|loans|storageitems]
-  where FLAGS include:
+go run ./cmd/ldp-testdata/main.go [FLAGS]
+
+All flags are optional
+
   -dataFormat string
     	The outputted data format [folioJSON|jsonArray] (default "folioJSON")
   -dir string
-    	The directory to use for extract output. If the selected test data depends on
-    	other test data (e.g. 'users' depends on 'groups'), that dependency should exist
-    	in this directory.
-  -nGroups int
-    	The number of groups to create (default 12)
-  -nItems int
-    	The number of items to create (default 10000)
-  -nLoans int
-    	The number of loans to create (default 10000)
-  -nLocations int
-    	The number of locations to create (default 20)
-  -nUsers int
-    	The number of users to create (default 30000)
+    	The directory to store output
+  -fileDefs string
+    	The filepath of the JSON file definitions (default "filedefs.json")
+  -json string
+    	JSON array to override the number of objects set filedefs.json
+    	Example: '[{"path": "/loan-storage/loans", "n":50000}]'
+  -only-json
+    	Use with the -json flag to ignore filedefs.json
 ```
 
-Typically, you will want to run `ldp-testdata all` to generate all data. You can tweak the parameters
-using the options, e.g.
+Edit filedefs.json to change the number of objects created for each path, or 
+use the `-json` flag to override the number of objects set filedefs.json
 
 ```shell
-ldp-testdata -nUsers=50000 -nGroups=20 -nLoans=800000 -dir=./myOutput all
-```
-
-You can specify the same directory as a previous run to overwrite one type of data:
-```shell
-ldp-testdata -dir=./myOutput nUsers=20000 users
+go run ./cmd/ldp-testdata/main.go -json='[{"path": "/loan-storage/loans", "n":50000}]'
 ```
 
 **This software is under active development. Use this software only for testing purposes.**
