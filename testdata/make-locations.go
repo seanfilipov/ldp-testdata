@@ -10,7 +10,7 @@ type location struct {
 	ID   string `json:"id"`
 }
 
-func GenerateLocations(outputParams OutputParams, numLocations int) {
+func GenerateLocations(allParams AllParams, numLocations int) {
 	makeLocation := func() location {
 		return location{
 			Name: fake.LastName() + " Library",
@@ -25,14 +25,15 @@ func GenerateLocations(outputParams OutputParams, numLocations int) {
 
 	filename := "locations.json"
 	objKey := "locations"
-	writeOutput(outputParams, filename, objKey, locations)
+	writeOutput(allParams.Output, filename, objKey, locations)
 
-	updateManifest(fileDef{
+	updateManifest(FileDef{
 		Module:    "mod-inventory-storage",
 		Path:      "/locations",
 		Filename:  filename,
 		ObjectKey: objKey,
 		NumFiles:  1,
 		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/location.html",
-	}, outputParams)
+		N:         numLocations,
+	}, allParams.Output)
 }

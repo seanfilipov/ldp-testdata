@@ -1,0 +1,17 @@
+init_tasks:
+ - command: "pkill -f go-build"
+ - command: "go run cmd/ldp-testdata/main.go -openBrowser=true -fileDefs=./filedefs.json all"
+   nowait: true
+
+watchers:
+ - extension: html
+   tasks:
+   - command: "pkill -f go-build"
+   - command: "go run cmd/ldp-testdata/main.go -openBrowser=false -fileDefs=./filedefs.json all"
+     nowait: false
+ - extension: go
+   tasks:
+   - command: "pkill -f go-build"
+   - command: "go run cmd/ldp-testdata/main.go -openBrowser=false -fileDefs=./filedefs.json all"
+     nowait: true
+

@@ -1,11 +1,16 @@
 package testdata
 
-import "path/filepath"
+import (
+	"path/filepath"
+)
 
+// DataFmt is an enum type
 type DataFmt int
 
 const (
+	// FolioJSON is the default data format output, the FOLIO JSON format used today
 	FolioJSON DataFmt = iota
+	// JSONArray is the same as FolioJSON but without the key that wraps the array
 	JSONArray
 )
 
@@ -14,21 +19,20 @@ type OutputParams struct {
 	DataFormat DataFmt
 	Indent     bool
 }
+
+// AllParams includes the input parameters FileDefs, and the OutputParams
 type AllParams struct {
-	Output       OutputParams
-	NumGroups    int
-	NumUsers     int
-	NumLocations int
-	NumItems     int
-	NumLoans     int
+	FileDefs []FileDef
+	Output   OutputParams
 }
 
-func MakeAll(p AllParams) {
-	GenerateGroups(p.Output, p.NumGroups)
-	GenerateUsers(p.Output, p.NumUsers)
-	GenerateLocations(p.Output, p.NumLocations)
-	GenerateStorageItems(p.Output, p.NumItems)
-	GenerateLoans(p.Output, p.NumLoans)
+// GenFunc is a function that generates a data output
+type GenFunc func(AllParams, int)
+
+func MakeAll(funcs []GenFunc, p AllParams) {
+	for i, fileDef := range p.FileDefs {
+		funcs[i](p, fileDef.N)
+	}
 }
 
 func writeOutput(params OutputParams, filename, jsonKeyname string, slice []interface{}) {

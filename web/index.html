@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ldp-testdata</title>
+    <style>
+      body {
+        background-color: #ddd;
+      }
+      .clearfix::after {
+        content: "";
+        clear: both;
+        display: table;
+      }
+      .wrapper {
+        width: 900px;
+        margin: 0 auto;
+      }
+      .filedefsBox {
+        background-color: #eee;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        height: 400px;
+        width: 400px;
+      }
+      .filedefBox {
+        background-color: #eee;
+        border-bottom: 1px solid #ccc;
+        padding: 10px;
+      }
+      .filedefBox label {
+        margin-left: 10px;
+      }
+      .filedefBox label input {
+        width: 80px;
+      }
+      #run-ctrl {
+        display: flex;
+        justify-content: flex-start;
+      }
+      #run-ctrl button {
+        margin-right: 20px;
+      }
+      #run-ctrl span {
+        color: #666;
+        line-height: 34px;
+      }
+      .selected {
+        background-color: #e0f5ff;
+        border: 1px solid #88c3ff;
+      }
+      button {
+        background-color: #2196F3;
+        color: #fff;
+        text-transform: uppercase;
+        font-weight: bold;
+      }
+      #mockfile {
+        line-height: 50px;
+        margin: 0;
+        padding-left: 10px;
+        font-size: 0.9em;
+        color: #777;
+        background-color: #eee;
+        border-bottom: 1px solid #ccc;
+      }
+      #mockdata {
+        margin: 0;
+        padding: 10px;
+        white-space: pre-wrap;
+        font-size: 0.9em;
+        background-color: #eee;
+      }
+    </style>
+    <!-- <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/base-min.css"> -->
+    <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-nr-min.css">
+    <script>
+      var lastSelected
+
+      function testdataFetch(elmt, filename, objectKey) {
+        if(lastSelected) lastSelected.classList.remove('selected')
+        elmt.className += ' selected'
+        lastSelected = elmt
+        document.getElementById('mockfile').textContent = '...'
+        document.getElementById('mockdata').textContent = ''
+
+        fetch('/fake/'+filename)
+          .then(response => response.json())
+          .then(resp => {
+            var data = JSON.parse(resp.data)
+            var twenty = data[objectKey].slice(0,20)
+            document.getElementById('mockfile').textContent = resp.file
+            document.getElementById('mockdata').textContent = JSON.stringify(twenty, null, 2)
+          })
+      }
+    </script>
+  </head>
+  <!-- <body onload="document.querySelector('.filedefBox').click()"> -->
+  <body>
+    
+    <div class="wrapper">
+      <div class="content">
+        <h1>ldp-testdata</h1>
+        <p>This tool generates fake FOLIO data to support data analysis of future real FOLIO environments.</p>
+        
+        <h3>API</h3>
+        <div class="filedefsBox clearfix">
+          {{#defs}}
+            <!-- onclick="testdataFetch(this, '{{filename}}', '{{objectKey}}')" -->
+            <div class="filedefBox" >
+              {{path}}
+                <label for="option-one" class="pure-checkbox">
+                  n:
+                  <input id="option-one" type="textbox" value="{{n}}">
+                </label>
+            </div>
+          {{/defs}}
+        </div>
+        <div id='run-ctrl'>
+          <button class="pure-button pure-button-primary" disabled>Run</button>
+          <span>✔ Up-to-date</span>
+        </div>
+
+        <!-- <h3>Simulated Data</h3>
+        <pre id='mockfile'></pre>
+        <pre id='mockdata'></pre> -->
+      </div>
+    </div>
+
+  </body>
+</html>
+ 

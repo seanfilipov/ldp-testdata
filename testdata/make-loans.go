@@ -113,34 +113,31 @@ func (lg loanGenerator) makeLoans(startDay int) (day int, loans []interface{}) {
 	return lg.EndDay, loans
 }
 
-func (lg loanGenerator) generateLoansSingleFile(startDay, callNum int) int {
+func (lg loanGenerator) generateLoansSingleFile(startDay, callNum int) (int, int) {
 	reachedDay, loans := lg.makeLoans(startDay)
 	callNumStr := strconv.Itoa(callNum)
 	filename := lg.Filename + "." + callNumStr
 	writeOutput(lg.outputParams, filename, lg.ObjectKey, loans)
 	totalWritten := strconv.Itoa(((callNum - 1) * lg.TxnPerFile) + len(loans))
 	logger.Debugf("Wrote %d transactions to %s (%s total)\n", len(loans), filename, totalWritten)
-	return reachedDay
+	return reachedDay, len(loans)
 }
-func (lg loanGenerator) recurse(startDay, callNum int) {
-	reachedDay := lg.generateLoansSingleFile(startDay, callNum)
-	if reachedDay != lg.EndDay {
-		lg.recurse(reachedDay, callNum+1)
-	}
-}
-func (lg loanGenerator) run() (counter int) {
+func (lg loanGenerator) run() (counter, totalLoansMade int) {
 	runCount := 0
 	reachedDay := 0
 	for reachedDay != lg.EndDay {
+		var numLoans int
 		runCount++
-		reachedDay = lg.generateLoansSingleFile(reachedDay, runCount)
+		reachedDay, numLoans = lg.generateLoansSingleFile(reachedDay, runCount)
 		logger.Debugf("Run #%d: reached day %d\n", runCount, reachedDay)
 		counter++
+		totalLoansMade += numLoans
 	}
 	return
 }
 
-func GenerateLoans(outputParams OutputParams, totalNumTxns int) {
+func GenerateLoans(allParams AllParams, totalNumTxns int) {
+	outputParams := allParams.Output
 	numDays := 365
 	txnPerFile := 100000
 	txnPerDay := int(math.Ceil(float64(totalNumTxns / numDays)))
@@ -160,13 +157,14 @@ func GenerateLoans(outputParams OutputParams, totalNumTxns int) {
 		txnPerDay,
 		txnPerFile,
 	}
-	numFiles := lg.run()
-	updateManifest(fileDef{
+	numFiles, totalLoansMade := lg.run()
+	updateManifest(FileDef{
 		Module:    "mod-circulation-storage",
 		Path:      "/loan-storage/loans",
 		Filename:  filename,
 		ObjectKey: objKey,
 		NumFiles:  numFiles,
 		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-circulation-storage/loan-storage.html",
+		N:         totalLoansMade,
 	}, outputParams)
 }

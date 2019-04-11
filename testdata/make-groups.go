@@ -19,7 +19,7 @@ type group struct {
 	Metadata groupMetadata `json:"metadata"`
 }
 
-func GenerateGroups(outputParams OutputParams, numGroups int) {
+func GenerateGroups(allParams AllParams, numGroups int) {
 	groupNames := []string{
 		"Freshman", "Sophomore", "Junior", "Senior", "Graduate", "Alumni", "Faculty",
 		"Staff", "Affiliate_A", "Affiliate_B", "Affiliate_C", "Affiliate_D",
@@ -62,16 +62,18 @@ func GenerateGroups(outputParams OutputParams, numGroups int) {
 		g := newGroup(i)
 		groups = append(groups, g)
 	}
+
 	filename := "groups.json"
 	objKey := "usergroups"
-	writeOutput(outputParams, filename, objKey, groups)
+	writeOutput(allParams.Output, filename, objKey, groups)
 
-	updateManifest(fileDef{
+	updateManifest(FileDef{
 		Module:    "mod-users",
 		Path:      "/groups",
 		Filename:  filename,
 		ObjectKey: objKey,
 		NumFiles:  1,
 		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-users/groups.html",
-	}, outputParams)
+		N:         len(groups),
+	}, allParams.Output)
 }

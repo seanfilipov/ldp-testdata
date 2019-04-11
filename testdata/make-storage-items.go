@@ -35,7 +35,7 @@ func randomCopyNumbers() []string {
 	return []string{strconv.Itoa(random(1, 5))}
 }
 
-func GenerateStorageItems(outputParams OutputParams, numItems int) {
+func GenerateStorageItems(allParams AllParams, numItems int) {
 	rand.Seed(time.Now().UnixNano())
 	makeStorageItem := func() storageItem {
 		return storageItem{
@@ -54,14 +54,15 @@ func GenerateStorageItems(outputParams OutputParams, numItems int) {
 	}
 	filename := "storageItems.json"
 	objKey := "items"
-	writeOutput(outputParams, filename, objKey, storageItems)
+	writeOutput(allParams.Output, filename, objKey, storageItems)
 
-	updateManifest(fileDef{
+	updateManifest(FileDef{
 		Module:    "mod-inventory-storage",
 		Path:      "/item-storage/items",
 		Filename:  filename,
 		ObjectKey: objKey,
 		NumFiles:  1,
 		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/item-storage.html",
-	}, outputParams)
+		N:         numItems,
+	}, allParams.Output)
 }
