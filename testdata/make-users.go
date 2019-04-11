@@ -60,5 +60,6 @@ func GenerateUsers(allParams AllParams, numUsers int) {
 		ObjectKey: objKey,
 		NumFiles:  1,
 		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-users/users.html",
+		N:         numUsers,
 	}, allParams.Output)
 }

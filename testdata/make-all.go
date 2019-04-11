@@ -1,16 +1,16 @@
 package testdata
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 )
 
+// DataFmt is an enum type
 type DataFmt int
 
 const (
+	// FolioJSON is the default data format output, the FOLIO JSON format used today
 	FolioJSON DataFmt = iota
+	// JSONArray is the same as FolioJSON but without the key that wraps the array
 	JSONArray
 )
 
@@ -19,35 +19,20 @@ type OutputParams struct {
 	DataFormat DataFmt
 	Indent     bool
 }
+
+// AllParams includes the input parameters FileDefs, and the OutputParams
 type AllParams struct {
-	FileDefs     []FileDef
-	Output       OutputParams
-	NumGroups    int
-	NumUsers     int
-	NumLocations int
-	NumItems     int
-	NumLoans     int
+	FileDefs []FileDef
+	Output   OutputParams
 }
 
-// ParseFileDefs reads the fileDefs.json file and returns a slice of fileDefs
-func ParseFileDefs(filepath string) (fileDefs []FileDef) {
-	if filepath != "" {
-		jsonFile, errOpenFile := os.Open(filepath)
-		if errOpenFile != nil {
-			panic(errOpenFile)
-		}
-		byteValue, _ := ioutil.ReadAll(jsonFile)
-		json.Unmarshal(byteValue, &fileDefs)
+// GenFunc is a function that generates a data output
+type GenFunc func(AllParams, int)
+
+func MakeAll(funcs []GenFunc, p AllParams) {
+	for i, fileDef := range p.FileDefs {
+		funcs[i](p, fileDef.N)
 	}
-	return
-}
-
-func MakeAll(p AllParams) {
-	GenerateGroups(p, p.NumGroups)
-	GenerateUsers(p, p.NumUsers)
-	GenerateLocations(p, p.NumLocations)
-	GenerateStorageItems(p, p.NumItems)
-	GenerateLoans(p, p.NumLoans)
 }
 
 func writeOutput(params OutputParams, filename, jsonKeyname string, slice []interface{}) {

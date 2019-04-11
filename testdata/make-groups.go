@@ -74,5 +74,6 @@ func GenerateGroups(allParams AllParams, numGroups int) {
 		ObjectKey: objKey,
 		NumFiles:  1,
 		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-users/groups.html",
+		N:         len(groups),
 	}, allParams.Output)
 }

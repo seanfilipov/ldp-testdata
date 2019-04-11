@@ -34,5 +34,6 @@ func GenerateLocations(allParams AllParams, numLocations int) {
 		ObjectKey: objKey,
 		NumFiles:  1,
 		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/location.html",
+		N:         numLocations,
 	}, allParams.Output)
 }

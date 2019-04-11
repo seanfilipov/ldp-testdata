@@ -63,5 +63,6 @@ func GenerateStorageItems(allParams AllParams, numItems int) {
 		ObjectKey: objKey,
 		NumFiles:  1,
 		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/item-storage.html",
+		N:         numItems,
 	}, allParams.Output)
 }

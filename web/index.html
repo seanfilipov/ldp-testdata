@@ -6,34 +6,55 @@
       body {
         background-color: #ddd;
       }
+      .clearfix::after {
+        content: "";
+        clear: both;
+        display: table;
+      }
       .wrapper {
         width: 900px;
         margin: 0 auto;
       }
       .filedefsBox {
-        height: 100px;
+        background-color: #eee;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        height: 400px;
+        width: 400px;
       }
       .filedefBox {
-        min-width: 100px;
-        float: left;
-        background-color: #fff;
-        border: 1px solid #ccc;
-        padding: 15px 5px;
-        margin: 5px;
+        background-color: #eee;
+        border-bottom: 1px solid #ccc;
+        padding: 10px;
+      }
+      .filedefBox label {
+        margin-left: 10px;
+      }
+      .filedefBox label input {
+        width: 80px;
+      }
+      #run-ctrl {
+        display: flex;
+        justify-content: flex-start;
+      }
+      #run-ctrl button {
+        margin-right: 20px;
+      }
+      #run-ctrl span {
+        color: #666;
+        line-height: 34px;
       }
       .selected {
         background-color: #e0f5ff;
         border: 1px solid #88c3ff;
       }
-      #mockheader {
-        display: flex;
-        height: 50px;
-        align-content: center;
-        justify-content: flex-start;
-      }
-      #mockheader h3 { 
-        line-height: 50px;
-        margin: 0;
+      button {
+        background-color: #2196F3;
+        color: #fff;
+        text-transform: uppercase;
+        font-weight: bold;
       }
       #mockfile {
         line-height: 50px;
@@ -52,7 +73,8 @@
         background-color: #eee;
       }
     </style>
-    <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/base-min.css">
+    <!-- <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/base-min.css"> -->
+    <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-nr-min.css">
     <script>
       var lastSelected
 
@@ -74,7 +96,8 @@
       }
     </script>
   </head>
-  <body onload="document.querySelector('.filedefBox').click()">
+  <!-- <body onload="document.querySelector('.filedefBox').click()"> -->
+  <body>
     
     <div class="wrapper">
       <div class="content">
@@ -82,19 +105,26 @@
         <p>This tool generates fake FOLIO data to support data analysis of future real FOLIO environments.</p>
         
         <h3>API</h3>
-        <div class="filedefsBox">
+        <div class="filedefsBox clearfix">
           {{#defs}}
-            <div class="filedefBox" onclick="testdataFetch(this, '{{filename}}', '{{objectKey}}')">
+            <!-- onclick="testdataFetch(this, '{{filename}}', '{{objectKey}}')" -->
+            <div class="filedefBox" >
               {{path}}
+                <label for="option-one" class="pure-checkbox">
+                  n:
+                  <input id="option-one" type="textbox" value="{{n}}">
+                </label>
             </div>
           {{/defs}}
         </div>
-
-        <div id='mockheader'>
-          <h3>Simulated Data</h3>
+        <div id='run-ctrl'>
+          <button class="pure-button pure-button-primary" disabled>Run</button>
+          <span>✔ Up-to-date</span>
         </div>
+
+        <!-- <h3>Simulated Data</h3>
         <pre id='mockfile'></pre>
-        <pre id='mockdata'></pre>
+        <pre id='mockdata'></pre> -->
       </div>
     </div>
 
