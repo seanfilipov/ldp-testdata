@@ -24,7 +24,7 @@ To download:
 go get github.com/folio-org/ldp-testdata
 ```
 
-To run:
+To run CLI:
 ```shell
 go run ./cmd/ldp-testdata/main.go
 ```
@@ -56,4 +56,11 @@ use the `-json` flag to override the number of objects set in filedefs.json
 go run ./cmd/ldp-testdata/main.go -json='[{"path": "/loan-storage/loans", "n":50000}]'
 ```
 
-**This software is under active development. Use this software only for testing purposes.**
+Supported Routes
+--------
+
+- [/groups](https://s3.amazonaws.com/foliodocs/api/mod-users/groups.html)
+- [/users](https://s3.amazonaws.com/foliodocs/api/mod-users/users.html)
+- [/locations](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/location.html)
+- [/item-storage/items](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/item-storage.html)
+- [/loan-storage/loans](https://s3.amazonaws.com/foliodocs/api/mod-circulation-storage/loan-storage.html)
