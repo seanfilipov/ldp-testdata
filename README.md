@@ -50,7 +50,7 @@ All flags are optional
 ```
 
 Edit filedefs.json to change the number of objects created for each path, or 
-use the `-json` flag to override the number of objects set filedefs.json
+use the `-json` flag to override the number of objects set in filedefs.json
 
 ```shell
 go run ./cmd/ldp-testdata/main.go -json='[{"path": "/loan-storage/loans", "n":50000}]'
