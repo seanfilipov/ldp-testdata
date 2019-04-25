@@ -32,6 +32,13 @@
       "n": 10000
   },
   {
+      "module": "mod-inventory",
+      "path": "/inventory/items",
+      "filename": "inventoryItems.json",
+      "objectKey": "items",
+      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory/inventory.html"
+  },
+  {
       "module": "mod-circulation-storage",
       "path": "/loan-storage/loans",
       "filename": "loans.json",

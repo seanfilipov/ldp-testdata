@@ -39,6 +39,7 @@ func MapFileDefsToFunc(fileDefs []FileDef) (genFuncs []GenFunc) {
 		"/users",
 		"/locations",
 		"/item-storage/items",
+		"/inventory/items",
 		"/loan-storage/loans"}
 
 	for _, def := range fileDefs {
@@ -51,6 +52,8 @@ func MapFileDefsToFunc(fileDefs []FileDef) (genFuncs []GenFunc) {
 			genFuncs = append(genFuncs, GenerateLocations)
 		case "/item-storage/items":
 			genFuncs = append(genFuncs, GenerateStorageItems)
+		case "/inventory/items":
+			genFuncs = append(genFuncs, GenerateInventoryItems)
 		case "/loan-storage/loans":
 			genFuncs = append(genFuncs, GenerateLoans)
 		default:
