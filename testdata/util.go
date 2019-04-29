@@ -39,7 +39,9 @@ func MapFileDefsToFunc(fileDefs []FileDef) (genFuncs []GenFunc) {
 		"/users",
 		"/locations",
 		"/item-storage/items",
-		"/loan-storage/loans"}
+		"/inventory/items",
+		"/loan-storage/loans",
+		"/circulation/loans"}
 
 	for _, def := range fileDefs {
 		switch def.Path {
@@ -51,8 +53,12 @@ func MapFileDefsToFunc(fileDefs []FileDef) (genFuncs []GenFunc) {
 			genFuncs = append(genFuncs, GenerateLocations)
 		case "/item-storage/items":
 			genFuncs = append(genFuncs, GenerateStorageItems)
+		case "/inventory/items":
+			genFuncs = append(genFuncs, GenerateInventoryItems)
 		case "/loan-storage/loans":
 			genFuncs = append(genFuncs, GenerateLoans)
+		case "/circulation/loans":
+			genFuncs = append(genFuncs, GenerateCirculationLoans)
 		default:
 			logger.Errorf("Error: '%s' is not a valid path value. \n  Valid paths: \n    %v\n\n", def.Path, strings.Join(validPaths, "\n    "))
 			os.Exit(1)

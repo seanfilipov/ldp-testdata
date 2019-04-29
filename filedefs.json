@@ -32,11 +32,26 @@
       "n": 10000
   },
   {
+      "module": "mod-inventory",
+      "path": "/inventory/items",
+      "filename": "inventoryItems.json",
+      "objectKey": "items",
+      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory/inventory.html"
+  },
+  {
       "module": "mod-circulation-storage",
       "path": "/loan-storage/loans",
       "filename": "loans.json",
       "objectKey": "loans",
       "doc": "https://s3.amazonaws.com/foliodocs/api/mod-circulation-storage/loan-storage.html",
+      "n": 10000
+  },
+  {
+      "module": "mod-circulation",
+      "path": "/circulation/loans",
+      "filename": "circloan.json",
+      "objectKey": "loans",
+      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-circulation/circulation.html",
       "n": 10000
   }
 ]
