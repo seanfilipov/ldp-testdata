@@ -12,19 +12,20 @@ type user struct {
 	Username    string   `json:"username"`
 	ID          string   `json:"id"`
 	Barcode     string   `json:"barcode"`
-	Active      bool     `json:"active"`
+	Active      string   `json:"active"`
 	Type        string   `json:"type"`
 	PatronGroup string   `json:"patronGroup"`
 	ProxyFor    []string `json:"proxyFor"`
 }
 
-func isActive() bool {
+// FOLIO uses strings instead of bools here
+func isActive() string {
 	rand.Seed(time.Now().UnixNano())
 	randNum := rand.Intn(2)
 	if randNum == 0 {
-		return true
+		return "true"
 	}
-	return false
+	return "false"
 }
 
 func GenerateUsers(allParams AllParams, numUsers int) {
