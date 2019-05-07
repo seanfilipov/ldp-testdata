@@ -32,14 +32,14 @@ func GenerateUsers(allParams AllParams, numUsers int) {
 	makeUser := func() user {
 		randomGroup, _ := <-chnl
 		randomGroupMap := randomGroup.(map[string]interface{})
-		randomGroupName := randomGroupMap["group"].(string)
+		randomGroupId := randomGroupMap["id"].(string)
 		return user{
 			Username:    fake.UserName(),
 			ID:          uuid.Must(uuid.NewV4()).String(),
 			Barcode:     fake.DigitsN(16),
 			Active:      isActive(),
 			Type:        "patron",
-			PatronGroup: randomGroupName,
+			PatronGroup: randomGroupId,
 			ProxyFor:    make([]string, 0),
 		}
 	}
