@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/icrowley/fake"
+	"github.com/mitchellh/mapstructure"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -15,36 +16,53 @@ type itemStatus struct {
 }
 
 type storageItem struct {
-	ID               string     `json:"id"`
-	HoldingsRecordID string     `json:"holdingsRecordId"`
-	Barcode          string     `json:"barcode"`
-	Status           itemStatus `json:"status"`
-	Enumeration      string     `json:"enumeration"`
-	CopyNumbers      []string   `json:"copyNumbers"`
+	ID                  string     `json:"id"`
+	HoldingsRecordID    string     `json:"holdingsRecordId"`
+	Barcode             string     `json:"barcode"`
+	Status              itemStatus `json:"status"`
+	Enumeration         string     `json:"enumeration"`
+	CopyNumbers         []string   `json:"copyNumbers"`
+	ItemLevelCallNumber string     `json:"itemLevelCallNumber"`
+	PermanentLocationID string     `json:"permanentLocationId"`
+	TemporaryLocationID string     `json:"temporaryLocationId"`
+	MaterialTypeID      string     `json:"materialTypeID"`
 }
 
+// random returns a random int given a min/max range (include max)
 func random(min, max int) int {
-	return rand.Intn(max-min) + min
+	return rand.Intn(1+max-min) + min
 }
 func randomEnumeration() string {
 	randVolNum := random(1, 30)
-	randYear := random(1945, 2019)
-	return fmt.Sprintf("v. %d %d", randVolNum, randYear)
+	return fmt.Sprintf("v. %d", randVolNum)
 }
 func randomCopyNumbers() []string {
 	return []string{strconv.Itoa(random(1, 5))}
 }
 
 func GenerateStorageItems(allParams AllParams, numItems int) {
+
+	locChnl := streamRandomItem(allParams.Output, "locations.json", "locations")
+	matChnl := streamRandomItem(allParams.Output, "material-types.json", "mtypes")
+
 	rand.Seed(time.Now().UnixNano())
 	makeStorageItem := func() storageItem {
+		randomLocation, _ := <-locChnl
+		randomMaterial, _ := <-matChnl
+		var locationObj location
+		var materialObj materialType
+		mapstructure.Decode(randomLocation, &locationObj)
+		mapstructure.Decode(randomMaterial, &materialObj)
 		return storageItem{
-			ID:               uuid.Must(uuid.NewV4()).String(),
-			HoldingsRecordID: uuid.Must(uuid.NewV4()).String(),
-			Barcode:          fake.DigitsN(16),
-			Status:           itemStatus{Name: "Available"},
-			Enumeration:      randomEnumeration(),
-			CopyNumbers:      randomCopyNumbers(),
+			ID:                  uuid.Must(uuid.NewV4()).String(),
+			HoldingsRecordID:    uuid.Must(uuid.NewV4()).String(),
+			Barcode:             fake.DigitsN(16),
+			Status:              itemStatus{Name: "Available"},
+			Enumeration:         randomEnumeration(),
+			CopyNumbers:         randomCopyNumbers(),
+			ItemLevelCallNumber: randomCallNumber(),
+			PermanentLocationID: locationObj.ID,
+			MaterialTypeID:      materialObj.ID,
 		}
 	}
 	var storageItems []interface{}

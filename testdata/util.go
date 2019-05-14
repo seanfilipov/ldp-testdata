@@ -51,6 +51,10 @@ func MapFileDefsToFunc(fileDefs []FileDef) (genFuncs []GenFunc) {
 			genFuncs = append(genFuncs, GenerateUsers)
 		case "/locations":
 			genFuncs = append(genFuncs, GenerateLocations)
+		case "/material-types":
+			genFuncs = append(genFuncs, GenerateMaterialTypes)
+		case "/holdings-storage/holdings":
+			genFuncs = append(genFuncs, GenerateHoldings)
 		case "/item-storage/items":
 			genFuncs = append(genFuncs, GenerateStorageItems)
 		case "/inventory/items":
