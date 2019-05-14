@@ -1,6 +1,11 @@
 package testdata
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
 	"github.com/icrowley/fake"
 	uuid "github.com/satori/go.uuid"
 )
@@ -8,6 +13,10 @@ import (
 type location struct {
 	Name string `json:"name"`
 	ID   string `json:"id"`
+}
+
+type locationsFile struct {
+	Locations []location `json:"locations"`
 }
 
 func GenerateLocations(allParams AllParams, numLocations int) {
@@ -36,4 +45,34 @@ func GenerateLocations(allParams AllParams, numLocations int) {
 		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/location.html",
 		N:         numLocations,
 	}, allParams.Output)
+}
+
+//
+// Helpers for other files:
+//
+
+func readLocations(params OutputParams, filename string) []location {
+	filepath := filepath.Join(params.OutputDir, filename)
+	jsonFile, errOpeningFile := os.Open(filepath)
+	if errOpeningFile != nil {
+		panic(errOpeningFile)
+	}
+	byteValue, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		panic(err)
+	}
+	var locationsFileObj locationsFile
+	json.Unmarshal(byteValue, &locationsFileObj)
+	return locationsFileObj.Locations
+}
+
+func lookupLocation(ID string, locations *[]location) location {
+	var matchingLoc location
+	for _, loc := range *locations {
+		if loc.ID == ID {
+			matchingLoc = loc
+			break
+		}
+	}
+	return matchingLoc
 }

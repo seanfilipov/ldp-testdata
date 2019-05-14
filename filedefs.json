@@ -24,6 +24,22 @@
       "n": 20
   },
   {
+    "module": "mod-inventory-storage",
+    "path": "/material-types",
+    "filename": "material-types.json",
+    "objectKey": "mtypes",
+    "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/material-type.html",
+    "n": 3
+  },
+  {
+    "module": "mod-inventory-storage",
+    "path": "/holdings-storage/holdings",
+    "filename": "holdings.json",
+    "objectKey": "holdingsRecords",
+    "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/holdings-storage.html",
+    "n": 3
+  },
+  {
       "module": "mod-inventory-storage",
       "path": "/item-storage/items",
       "filename": "storageItems.json",

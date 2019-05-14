@@ -11,17 +11,17 @@ import (
 // instead of the storage module (mod-loan-storage)
 // https://s3.amazonaws.com/foliodocs/api/mod-inventory/inventory.html
 
-type materialType struct {
+type itemMaterialType struct {
 	Name string `json:"name"`
 }
 type inventoryItem struct {
-	Title             string       `json:"title"`
-	ID                string       `json:"id"`
-	Barcode           string       `json:"barcode"`
-	HoldingsRecordID  string       `json:"holdingsRecordId"`
-	EffectiveLocation location     `json:"effectiveLocation"`
-	Status            itemStatus   `json:"status"`
-	MaterialType      materialType `json:"materialType"`
+	Title             string           `json:"title"`
+	ID                string           `json:"id"`
+	Barcode           string           `json:"barcode"`
+	HoldingsRecordID  string           `json:"holdingsRecordId"`
+	EffectiveLocation location         `json:"effectiveLocation"`
+	Status            itemStatus       `json:"status"`
+	MaterialType      itemMaterialType `json:"materialType"`
 }
 
 func GenerateInventoryItems(allParams AllParams, numItems int) {
@@ -31,21 +31,20 @@ func GenerateInventoryItems(allParams AllParams, numItems int) {
 	pkgDir := path.Dir(nameOfThisFile)
 	go streamRandomLine(pkgDir+"/book_titles.txt", bookChnl)
 
-	locChnl := streamRandomItem(outputParams, "locations.json", "locations")
+	locations := readLocations(allParams.Output, "locations.json")
+
 	makeItem := func(storageItemObj storageItem) inventoryItem {
 		// TODO: Should iterate over titles, not get a random one
 		randomBookTitle, _ := <-bookChnl
-		randomLocation, _ := <-locChnl
-		var locationObj location
-		mapstructure.Decode(randomLocation, &locationObj)
+		effectiveLocation := lookupLocation(storageItemObj.PermanentLocationID, &locations)
 		return inventoryItem{
 			Title:             randomBookTitle,
 			ID:                storageItemObj.ID,
 			Barcode:           storageItemObj.Barcode,
 			HoldingsRecordID:  storageItemObj.HoldingsRecordID,
-			EffectiveLocation: locationObj,
+			EffectiveLocation: effectiveLocation,
 			Status:            storageItemObj.Status,
-			MaterialType:      materialType{Name: "book"},
+			MaterialType:      itemMaterialType{Name: "book"},
 		}
 	}
 	var items []interface{}
