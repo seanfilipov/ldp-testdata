@@ -35,7 +35,7 @@ func countLoanStorageFiles(filepath string) (numMatching int) {
 	}
 
 	for _, f := range files {
-		if strings.HasPrefix(f.Name(), "loans.json.") {
+		if strings.HasPrefix(f.Name(), "loan-storage-loans-") {
 			numMatching++
 			// fmt.Println(f.Name())
 		}
@@ -58,17 +58,14 @@ func makeItemsMap(filepath string) map[string]inventoryItem {
 }
 
 // GenerateCirculationLoans makes the same number of loans as found in loans.json
-func GenerateCirculationLoans(allParams AllParams, ignore int) {
-	outputParams := allParams.Output
+func GenerateCirculationLoans(filedef FileDef, outputParams OutputParams) {
 	var circLoans []interface{}
-	filename := "circloan.json"
-	objKey := "loans"
-	itemsPath := filepath.Join(outputParams.OutputDir, "inventoryItems.json")
+	itemsPath := filepath.Join(outputParams.OutputDir, "inventory-items-1.json")
 	itemsMap := makeItemsMap(itemsPath)
 	numFiles := countLoanStorageFiles(outputParams.OutputDir)
 	numThings := 0
 	for i := 1; i <= numFiles; i++ {
-		loanChnl := streamOutputLinearly(outputParams, "loans.json."+strconv.Itoa(i), "loans")
+		loanChnl := streamOutputLinearly(outputParams, "loan-storage-loans-"+strconv.Itoa(i)+".json", "loans")
 		for oneLoan := range loanChnl {
 			var loanObj circulationLoan
 			mapstructure.Decode(oneLoan, &loanObj)
@@ -85,16 +82,10 @@ func GenerateCirculationLoans(allParams AllParams, ignore int) {
 			}
 			circLoans = append(circLoans, loanObj)
 		}
-		writeOutput(outputParams, filename+"."+strconv.Itoa(i), objKey, circLoans)
+		writeOutput(outputParams, fileNumStr(filedef, i), filedef.ObjectKey, circLoans)
 		numThings += len(circLoans)
 	}
-	updateManifest(FileDef{
-		Module:    "mod-circulation",
-		Path:      "/circulation/loans",
-		Filename:  filename,
-		ObjectKey: objKey,
-		NumFiles:  numFiles,
-		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-circulation/circulation.html",
-		N:         numThings,
-	}, allParams.Output)
+	filedef.NumFiles = numFiles
+	filedef.N = numThings
+	updateManifest(filedef, outputParams)
 }

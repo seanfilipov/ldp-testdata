@@ -27,39 +27,30 @@ func isActive() bool {
 	return false
 }
 
-func GenerateUsers(allParams AllParams, numUsers int) {
-	chnl := streamRandomItem(allParams.Output, "groups.json", "usergroups")
+func GenerateUsers(filedef FileDef, outputParams OutputParams) {
+	chnl := streamRandomItem(outputParams, "groups-1.json", "usergroups")
 	makeUser := func() user {
 		randomGroup, _ := <-chnl
 		randomGroupMap := randomGroup.(map[string]interface{})
-		randomGroupId := randomGroupMap["id"].(string)
+		randomGroupID := randomGroupMap["id"].(string)
 		return user{
 			Username:    fake.UserName(),
 			ID:          uuid.Must(uuid.NewV4()).String(),
 			Barcode:     fake.DigitsN(16),
 			Active:      isActive(),
 			Type:        "patron",
-			PatronGroup: randomGroupId,
+			PatronGroup: randomGroupID,
 			ProxyFor:    make([]string, 0),
 		}
 	}
 	// fmt.Printf("%+v\n", makeUser())
 	var users []interface{}
-	for i := 0; i < numUsers; i++ {
+	for i := 0; i < filedef.N; i++ {
 		u := makeUser()
 		users = append(users, u)
 	}
-	filename := "users.json"
-	objKey := "users"
-	writeOutput(allParams.Output, filename, objKey, users)
 
-	updateManifest(FileDef{
-		Module:    "mod-users",
-		Path:      "/users",
-		Filename:  filename,
-		ObjectKey: objKey,
-		NumFiles:  1,
-		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-users/users.html",
-		N:         numUsers,
-	}, allParams.Output)
+	writeOutput(outputParams, fileNumStr(filedef, 1), filedef.ObjectKey, users)
+	filedef.NumFiles = 1
+	updateManifest(filedef, outputParams)
 }

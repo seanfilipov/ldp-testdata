@@ -2,6 +2,8 @@ package testdata
 
 import (
 	"path/filepath"
+	"strconv"
+	"strings"
 )
 
 // DataFmt is an enum type
@@ -27,14 +29,18 @@ type AllParams struct {
 }
 
 // GenFunc is a function that generates a data output
-type GenFunc func(AllParams, int)
+type GenFunc func(FileDef, OutputParams)
 
 func MakeAll(funcs []GenFunc, p AllParams) {
 	for i, fileDef := range p.FileDefs {
-		funcs[i](p, fileDef.N)
+		funcs[i](fileDef, p.Output)
 	}
 }
-
+func fileNumStr(def FileDef, num int) string {
+	parts := strings.Split(def.Path, "/")[1:]
+	filename := strings.Join(parts, "-")
+	return filename + "-" + strconv.Itoa(num) + ".json"
+}
 func writeOutput(params OutputParams, filename, jsonKeyname string, slice []interface{}) {
 	filepath := filepath.Join(params.OutputDir, filename)
 	if params.DataFormat == JSONArray {

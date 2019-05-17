@@ -19,7 +19,7 @@ type locationsFile struct {
 	Locations []location `json:"locations"`
 }
 
-func GenerateLocations(allParams AllParams, numLocations int) {
+func GenerateLocations(filedef FileDef, outputParams OutputParams) {
 	makeLocation := func() location {
 		return location{
 			Name: fake.LastName() + " Library",
@@ -27,24 +27,14 @@ func GenerateLocations(allParams AllParams, numLocations int) {
 		}
 	}
 	var locations []interface{}
-	for i := 0; i < numLocations; i++ {
+	for i := 0; i < filedef.N; i++ {
 		l := makeLocation()
 		locations = append(locations, l)
 	}
 
-	filename := "locations.json"
-	objKey := "locations"
-	writeOutput(allParams.Output, filename, objKey, locations)
-
-	updateManifest(FileDef{
-		Module:    "mod-inventory-storage",
-		Path:      "/locations",
-		Filename:  filename,
-		ObjectKey: objKey,
-		NumFiles:  1,
-		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/location.html",
-		N:         numLocations,
-	}, allParams.Output)
+	writeOutput(outputParams, fileNumStr(filedef, 1), filedef.ObjectKey, locations)
+	filedef.NumFiles = 1
+	updateManifest(filedef, outputParams)
 }
 
 //

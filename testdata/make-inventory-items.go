@@ -24,14 +24,13 @@ type inventoryItem struct {
 	MaterialType      itemMaterialType `json:"materialType"`
 }
 
-func GenerateInventoryItems(allParams AllParams, numItems int) {
-	outputParams := allParams.Output
+func GenerateInventoryItems(filedef FileDef, outputParams OutputParams) {
 	bookChnl := make(chan string, 1)
 	_, nameOfThisFile, _, _ := runtime.Caller(0)
 	pkgDir := path.Dir(nameOfThisFile)
 	go streamRandomLine(pkgDir+"/book_titles.txt", bookChnl)
 
-	locations := readLocations(allParams.Output, "locations.json")
+	locations := readLocations(outputParams, "locations-1.json")
 
 	makeItem := func(storageItemObj storageItem) inventoryItem {
 		// TODO: Should iterate over titles, not get a random one
@@ -48,24 +47,15 @@ func GenerateInventoryItems(allParams AllParams, numItems int) {
 		}
 	}
 	var items []interface{}
-	itemsChnl := streamOutputLinearly(outputParams, "storageItems.json", "items")
+	itemsChnl := streamOutputLinearly(outputParams, "item-storage-items-1.json", "items")
 	for oneItem := range itemsChnl {
 		var storageItemObj storageItem
 		mapstructure.Decode(oneItem, &storageItemObj)
 		u := makeItem(storageItemObj)
 		items = append(items, u)
 	}
-	filename := "inventoryItems.json"
-	objKey := "items"
-	writeOutput(outputParams, filename, objKey, items)
 
-	updateManifest(FileDef{
-		Module:    "mod-inventory",
-		Path:      "/inventory/items",
-		Filename:  filename,
-		ObjectKey: objKey,
-		NumFiles:  1,
-		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-inventory/inventory.html",
-		N:         len(items),
-	}, allParams.Output)
+	writeOutput(outputParams, fileNumStr(filedef, 1), filedef.ObjectKey, items)
+	filedef.NumFiles = 1
+	updateManifest(filedef, outputParams)
 }

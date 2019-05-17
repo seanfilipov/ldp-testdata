@@ -27,8 +27,8 @@ type loan struct {
 }
 
 type loanGenerator struct {
+	filedef      FileDef
 	outputParams OutputParams
-	Filename     string
 	ObjectKey    string
 	ItemChnl     chan interface{}
 	UserChnl     chan interface{}
@@ -115,8 +115,7 @@ func (lg loanGenerator) makeLoans(startDay int) (day int, loans []interface{}) {
 
 func (lg loanGenerator) generateLoansSingleFile(startDay, callNum int) (int, int) {
 	reachedDay, loans := lg.makeLoans(startDay)
-	callNumStr := strconv.Itoa(callNum)
-	filename := lg.Filename + "." + callNumStr
+	filename := fileNumStr(lg.filedef, callNum)
 	writeOutput(lg.outputParams, filename, lg.ObjectKey, loans)
 	totalWritten := strconv.Itoa(((callNum - 1) * lg.TxnPerFile) + len(loans))
 	logger.Debugf("Wrote %d transactions to %s (%s total)\n", len(loans), filename, totalWritten)
@@ -136,35 +135,27 @@ func (lg loanGenerator) run() (counter, totalLoansMade int) {
 	return
 }
 
-func GenerateLoans(allParams AllParams, totalNumTxns int) {
-	outputParams := allParams.Output
+func GenerateLoans(filedef FileDef, outputParams OutputParams) {
 	numDays := 365
 	txnPerFile := 100000
-	txnPerDay := int(math.Ceil(float64(totalNumTxns / numDays)))
+	txnPerDay := int(math.Ceil(float64(filedef.N / numDays)))
 
 	numFilesNeeded := strconv.Itoa(int(math.Ceil(float64((txnPerDay * numDays) / txnPerFile))))
 	logger.Debug("Going to write ~" + numFilesNeeded + " files")
-	filename := "loans.json"
 	objKey := "loans"
 	lg := loanGenerator{
+		filedef,
 		outputParams,
-		filename,
 		objKey,
-		streamRandomItem(outputParams, "storageItems.json", "items"),
-		streamRandomItem(outputParams, "users.json", "users"),
+		streamRandomItem(outputParams, "item-storage-items-1.json", "items"),
+		streamRandomItem(outputParams, "users-1.json", "users"),
 		make(map[string]loan),
 		numDays,
 		txnPerDay,
 		txnPerFile,
 	}
 	numFiles, totalLoansMade := lg.run()
-	updateManifest(FileDef{
-		Module:    "mod-circulation-storage",
-		Path:      "/loan-storage/loans",
-		Filename:  filename,
-		ObjectKey: objKey,
-		NumFiles:  numFiles,
-		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-circulation-storage/loan-storage.html",
-		N:         totalLoansMade,
-	}, outputParams)
+	filedef.N = totalLoansMade
+	filedef.NumFiles = numFiles
+	updateManifest(filedef, outputParams)
 }

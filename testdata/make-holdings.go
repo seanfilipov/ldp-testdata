@@ -8,29 +8,19 @@ type holding struct {
 	ID string `json:"id"`
 }
 
-func GenerateHoldings(allParams AllParams, numHoldings int) {
+func GenerateHoldings(filedef FileDef, outputParams OutputParams) {
 	makeHolding := func() materialType {
 		return materialType{
 			ID: uuid.Must(uuid.NewV4()).String(),
 		}
 	}
 	var holdings []interface{}
-	for i := 0; i < numHoldings; i++ {
+	for i := 0; i < filedef.N; i++ {
 		h := makeHolding()
 		holdings = append(holdings, h)
 	}
 
-	filename := "holdings.json"
-	objKey := "holdingsRecords"
-	writeOutput(allParams.Output, filename, objKey, holdings)
-
-	updateManifest(FileDef{
-		Module:    "mod-inventory-storage",
-		Path:      "/holdings-storage/holdings",
-		Filename:  filename,
-		ObjectKey: objKey,
-		NumFiles:  1,
-		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/holdings-storage.html",
-		N:         numHoldings,
-	}, allParams.Output)
+	writeOutput(outputParams, fileNumStr(filedef, 1), filedef.ObjectKey, holdings)
+	filedef.NumFiles = 1
+	updateManifest(filedef, outputParams)
 }
