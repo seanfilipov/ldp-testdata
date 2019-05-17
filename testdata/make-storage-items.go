@@ -40,10 +40,10 @@ func randomCopyNumbers() []string {
 	return []string{strconv.Itoa(random(1, 5))}
 }
 
-func GenerateStorageItems(allParams AllParams, numItems int) {
+func GenerateStorageItems(filedef FileDef, outputParams OutputParams) {
 
-	locChnl := streamRandomItem(allParams.Output, "locations.json", "locations")
-	matChnl := streamRandomItem(allParams.Output, "material-types.json", "mtypes")
+	locChnl := streamRandomItem(outputParams, "locations-1.json", "locations")
+	matChnl := streamRandomItem(outputParams, "material-types-1.json", "mtypes")
 
 	rand.Seed(time.Now().UnixNano())
 	makeStorageItem := func() storageItem {
@@ -66,21 +66,12 @@ func GenerateStorageItems(allParams AllParams, numItems int) {
 		}
 	}
 	var storageItems []interface{}
-	for i := 0; i < numItems; i++ {
+	for i := 0; i < filedef.N; i++ {
 		oneStorageItem := makeStorageItem()
 		storageItems = append(storageItems, oneStorageItem)
 	}
-	filename := "storageItems.json"
-	objKey := "items"
-	writeOutput(allParams.Output, filename, objKey, storageItems)
 
-	updateManifest(FileDef{
-		Module:    "mod-inventory-storage",
-		Path:      "/item-storage/items",
-		Filename:  filename,
-		ObjectKey: objKey,
-		NumFiles:  1,
-		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/item-storage.html",
-		N:         numItems,
-	}, allParams.Output)
+	writeOutput(outputParams, fileNumStr(filedef, 1), filedef.ObjectKey, storageItems)
+	filedef.NumFiles = 1
+	updateManifest(filedef, outputParams)
 }

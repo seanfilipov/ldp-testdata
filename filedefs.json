@@ -2,7 +2,6 @@
   {
       "module": "mod-users",
       "path": "/groups",
-      "filename": "groups.json",
       "objectKey": "usergroups",
       "doc": "https://s3.amazonaws.com/foliodocs/api/mod-users/groups.html",
       "n": 12
@@ -10,7 +9,6 @@
   {
       "module": "mod-users",
       "path": "/users",
-      "filename": "users.json",
       "objectKey": "users",
       "doc": "https://s3.amazonaws.com/foliodocs/api/mod-users/users.html",
       "n": 30000
@@ -18,7 +16,6 @@
   {
       "module": "mod-inventory-storage",
       "path": "/locations",
-      "filename": "locations.json",
       "objectKey": "locations",
       "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/location.html",
       "n": 20
@@ -26,7 +23,6 @@
   {
     "module": "mod-inventory-storage",
     "path": "/material-types",
-    "filename": "material-types.json",
     "objectKey": "mtypes",
     "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/material-type.html",
     "n": 3
@@ -34,7 +30,6 @@
   {
     "module": "mod-inventory-storage",
     "path": "/holdings-storage/holdings",
-    "filename": "holdings.json",
     "objectKey": "holdingsRecords",
     "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/holdings-storage.html",
     "n": 3
@@ -42,7 +37,6 @@
   {
       "module": "mod-inventory-storage",
       "path": "/item-storage/items",
-      "filename": "storageItems.json",
       "objectKey": "items",
       "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/item-storage.html",
       "n": 10000
@@ -50,14 +44,12 @@
   {
       "module": "mod-inventory",
       "path": "/inventory/items",
-      "filename": "inventoryItems.json",
       "objectKey": "items",
       "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory/inventory.html"
   },
   {
       "module": "mod-circulation-storage",
       "path": "/loan-storage/loans",
-      "filename": "loans.json",
       "objectKey": "loans",
       "doc": "https://s3.amazonaws.com/foliodocs/api/mod-circulation-storage/loan-storage.html",
       "n": 10000
@@ -65,7 +57,6 @@
   {
       "module": "mod-circulation",
       "path": "/circulation/loans",
-      "filename": "circloan.json",
       "objectKey": "loans",
       "doc": "https://s3.amazonaws.com/foliodocs/api/mod-circulation/circulation.html",
       "n": 10000

@@ -10,7 +10,6 @@ import (
 type FileDef struct {
 	Module    string `json:"module"`    // the module
 	Path      string `json:"path"`      // API route simulated
-	Filename  string `json:"filename"`  // the output filename
 	ObjectKey string `json:"objectKey"` // the field that contains the array in the output JSON
 	NumFiles  int    `json:"numFiles"`  // the number of files a part of this output
 	Doc       string `json:"doc"`       // URL to the API documentation
@@ -45,8 +44,8 @@ func updateManifest(def FileDef, params OutputParams) {
 		json.Unmarshal(byteValue, &defs)
 		foundTarget := false
 		for i := 0; i < len(defs); i++ {
-			if defs[i].Filename == def.Filename {
-				logger.Debugf("Overwriting entry for %s", def.Filename)
+			if defs[i].Path == def.Path {
+				logger.Debugf("Overwriting entry for %s", def.Path)
 				defs[i] = def
 				foundTarget = true
 				break

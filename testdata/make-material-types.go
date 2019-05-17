@@ -10,7 +10,7 @@ type materialType struct {
 	Source string `json:"source"`
 }
 
-func GenerateMaterialTypes(allParams AllParams, numMaterialTypes int) {
+func GenerateMaterialTypes(filedef FileDef, outputParams OutputParams) {
 	typeList := []string{"dvd", "video recording", "microform", "electronic resource", "text",
 		"sound recording", "unspecified", "book"}
 	makeMaterialType := func(typeName string) materialType {
@@ -26,17 +26,7 @@ func GenerateMaterialTypes(allParams AllParams, numMaterialTypes int) {
 		types = append(types, l)
 	}
 
-	filename := "material-types.json"
-	objKey := "mtypes"
-	writeOutput(allParams.Output, filename, objKey, types)
-
-	updateManifest(FileDef{
-		Module:    "mod-inventory-storage",
-		Path:      "/material-types",
-		Filename:  filename,
-		ObjectKey: objKey,
-		NumFiles:  1,
-		Doc:       "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/material-type.html",
-		N:         numMaterialTypes,
-	}, allParams.Output)
+	writeOutput(outputParams, fileNumStr(filedef, 1), filedef.ObjectKey, types)
+	filedef.NumFiles = 1
+	updateManifest(filedef, outputParams)
 }
