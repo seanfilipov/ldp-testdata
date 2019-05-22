@@ -24,8 +24,7 @@
     "module": "mod-inventory-storage",
     "path": "/material-types",
     "objectKey": "mtypes",
-    "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/material-type.html",
-    "n": 3
+    "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/material-type.html"
   },
   {
     "module": "mod-inventory-storage",

@@ -62,5 +62,6 @@ Supported Routes
 - [/groups](https://s3.amazonaws.com/foliodocs/api/mod-users/groups.html)
 - [/users](https://s3.amazonaws.com/foliodocs/api/mod-users/users.html)
 - [/locations](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/location.html)
+- [/material-types](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/material-type.html)
 - [/item-storage/items](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/item-storage.html)
 - [/loan-storage/loans](https://s3.amazonaws.com/foliodocs/api/mod-circulation-storage/loan-storage.html)

@@ -28,7 +28,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 }
 func fakeHandler(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Path[len("/fake/"):]
-	filepath := "extract-output/default/" + filename
+	filepath := "output/default/" + filename
 	b, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		fmt.Println(err)
