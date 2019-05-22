@@ -24,7 +24,7 @@ func MakeTimestampedDir(dirFlag string) string {
 		os.MkdirAll(dirFlag, os.ModePerm) // Make the directory if it does not already exist
 		return dirFlag
 	}
-	extractDir := "./extract-output"
+	extractDir := "./output"
 	currentTime := time.Now()
 	timeStr := currentTime.Format("20060102_150405")
 	outputDir := filepath.Join(extractDir, timeStr)

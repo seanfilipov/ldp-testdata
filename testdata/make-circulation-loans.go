@@ -59,12 +59,12 @@ func makeItemsMap(filepath string) map[string]inventoryItem {
 
 // GenerateCirculationLoans makes the same number of loans as found in loans.json
 func GenerateCirculationLoans(filedef FileDef, outputParams OutputParams) {
-	var circLoans []interface{}
 	itemsPath := filepath.Join(outputParams.OutputDir, "inventory-items-1.json")
 	itemsMap := makeItemsMap(itemsPath)
 	numFiles := countLoanStorageFiles(outputParams.OutputDir)
 	numThings := 0
 	for i := 1; i <= numFiles; i++ {
+		var circLoans []interface{}
 		loanChnl := streamOutputLinearly(outputParams, "loan-storage-loans-"+strconv.Itoa(i)+".json", "loans")
 		for oneLoan := range loanChnl {
 			var loanObj circulationLoan

@@ -57,5 +57,6 @@ func GenerateInventoryItems(filedef FileDef, outputParams OutputParams) {
 
 	writeOutput(outputParams, fileNumStr(filedef, 1), filedef.ObjectKey, items)
 	filedef.NumFiles = 1
+	filedef.N = len(items)
 	updateManifest(filedef, outputParams)
 }

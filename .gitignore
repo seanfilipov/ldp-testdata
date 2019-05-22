@@ -1,4 +1,5 @@
 .vscode
 cmd/ldp-testdata/ldp-testdata
 extract-output
+output
 

@@ -27,6 +27,7 @@ func GenerateMaterialTypes(filedef FileDef, outputParams OutputParams) {
 	}
 
 	writeOutput(outputParams, fileNumStr(filedef, 1), filedef.ObjectKey, types)
+	filedef.N = len(typeList)
 	filedef.NumFiles = 1
 	updateManifest(filedef, outputParams)
 }
