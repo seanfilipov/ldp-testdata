@@ -18,21 +18,22 @@ Overview
 
 This purpose of this repo is to generate large amounts of fake FOLIO data to support the LDP analytics team.
 
-To download:
+To download and install:
 
 ```shell
-go get github.com/folio-org/ldp-testdata
+go get -u github.com/folio-org/ldp-testdata/...
 ```
 
-To run CLI:
+Run the command from the project root:
 ```shell
-go run ./cmd/ldp-testdata/main.go
+cd ~/go/src/folio-org/ldp-testdata
+~/go/bin/ldp-testdata
 ```
 
 Usage
 --------
 ```
-go run ./cmd/ldp-testdata/main.go [FLAGS]
+~/go/bin/ldp-testdata [FLAGS]
 
 All flags are optional
 
@@ -53,7 +54,7 @@ Edit filedefs.json to change the number of objects created for each path, or
 use the `-json` flag to override the number of objects set in filedefs.json
 
 ```shell
-go run ./cmd/ldp-testdata/main.go -json='[{"path": "/loan-storage/loans", "n":50000}]'
+~/go/bin/ldp-testdata -json='[{"path": "/loan-storage/loans", "n":50000}]'
 ```
 
 Supported Routes
