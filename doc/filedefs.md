@@ -16,15 +16,15 @@ filedefs.json contains the parameters for generating ldp-testdata. An example is
 
 Each object in the array is a `filedef`, defining a file that will be outputed. 
 
-#### module
+### module
 
 Name for the module that is being simulated
 
-#### path
+### path
 
 The API path for the data; `path` is the only unique field, so it is treated as the ID for the filedef.
 
-#### objectKey
+### objectKey
 
 The key for the output JSON file
 
@@ -38,11 +38,11 @@ Example:
 }
 ```
 
-#### doc
+### doc
 
 A URL to documention for this API path
 
-#### n
+### n
 
 The number of objects to generate
 
