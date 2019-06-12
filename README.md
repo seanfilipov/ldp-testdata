@@ -50,7 +50,7 @@ All flags are optional
     	Use with the -json flag to ignore filedefs.json
 ```
 
-Edit filedefs.json to change the number of objects created for each path, or 
+Edit [filedefs.json](https://github.com/folio-org/ldp-testdata/blob/master/doc/filedefs.md) to change the number of objects created for each path, or 
 use the `-json` flag to override the number of objects set in filedefs.json
 
 ```shell
