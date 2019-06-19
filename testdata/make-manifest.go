@@ -8,12 +8,12 @@ import (
 )
 
 type FileDef struct {
-	Module    string `json:"module"`    // the module
-	Path      string `json:"path"`      // API route simulated
-	ObjectKey string `json:"objectKey"` // the field that contains the array in the output JSON
-	NumFiles  int    `json:"numFiles"`  // the number of files a part of this output
-	Doc       string `json:"doc"`       // URL to the API documentation
-	N         int    `json:"n"`         // Number of objects
+	Module    string `json:"module"`      // the module
+	Path      string `json:"path"`        // API route simulated
+	ObjectKey string `json:"objectKey"`   // the field that contains the array in the output JSON
+	NumFiles  int    `json:"numFiles"`    // the number of files a part of this output
+	Doc       string `json:"doc"`         // URL to the API documentation
+	N         int    `json:"n,omitempty"` // Number of objects
 }
 
 func toInterface(originals []FileDef) []interface{} {

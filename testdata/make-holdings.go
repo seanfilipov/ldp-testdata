@@ -1,22 +1,31 @@
 package testdata
 
 import (
+	"github.com/mitchellh/mapstructure"
 	uuid "github.com/satori/go.uuid"
 )
 
 type holding struct {
-	ID string `json:"id"`
+	ID                  string `json:"id"`
+	InstanceID          string `json:"instanceId"`
+	PermanentLocationID string `json:"permanentLocationId"`
 }
 
 func GenerateHoldings(filedef FileDef, outputParams OutputParams) {
-	makeHolding := func() materialType {
-		return materialType{
-			ID: uuid.Must(uuid.NewV4()).String(),
+	instanceChnl := streamOutputLinearly(outputParams, "instance-storage-instances-1.json", "instances")
+	// numFiles := countFilesWithPrefix(outputParams.OutputDir, "instance-storage-instances")
+
+	makeHolding := func(oneInstance interface{}) holding {
+		var instanceObj instance
+		mapstructure.Decode(oneInstance, &instanceObj)
+		return holding{
+			ID:         uuid.Must(uuid.NewV4()).String(),
+			InstanceID: instanceObj.ID,
 		}
 	}
 	var holdings []interface{}
-	for i := 0; i < filedef.N; i++ {
-		h := makeHolding()
+	for oneInstance := range instanceChnl {
+		h := makeHolding(oneInstance)
 		holdings = append(holdings, h)
 	}
 

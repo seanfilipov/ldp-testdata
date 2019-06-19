@@ -48,10 +48,13 @@ The number of objects to generate
 
 For the following filedefs, `n` is irregular:
 
-| Path                | n behavior                             |
-|---------------------|----------------------------------------|
-| /loan-storage/loans | n is approximate¹                      |
-| /inventory/items    | Ignored. Same n as /item-storage/items |
-| /circulation/loans  | Ignored. Same n as /loan-storage/loans |
+| Path                       | n behavior                                     |
+|----------------------------|------------------------------------------------|
+| /loan-storage/loans        | n is approximate¹                              |
+| /instance-types            | n = 10                                         |
+| /holdings-storage/holdings | Ignored. Same n as /instance-storage/instances |
+| /item-storage/items        | Ignored. Same n as /instance-storage/instances |
+| /inventory/items           | Ignored. Same n as /instance-storage/instances |
+| /circulation/loans         | Ignored. Same n as /loan-storage/loans         |
 
 ¹ The current simulation for loan objects over 1 year involves some randomness, which makes meeting an exact number difficult.

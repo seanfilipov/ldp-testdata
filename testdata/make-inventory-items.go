@@ -13,6 +13,7 @@ import (
 
 type itemMaterialType struct {
 	Name string `json:"name"`
+	ID   string `json:"id"`
 }
 type inventoryItem struct {
 	Title             string           `json:"title"`
@@ -31,10 +32,14 @@ func GenerateInventoryItems(filedef FileDef, outputParams OutputParams) {
 	go streamRandomLine(pkgDir+"/book_titles.txt", bookChnl)
 
 	locations := readLocations(outputParams, "locations-1.json")
+	matChnl := streamRandomItem(outputParams, "material-types-1.json", "mtypes")
 
 	makeItem := func(storageItemObj storageItem) inventoryItem {
 		// TODO: Should iterate over titles, not get a random one
+		randomMaterial, _ := <-matChnl
 		randomBookTitle, _ := <-bookChnl
+		var materialObj materialType
+		mapstructure.Decode(randomMaterial, &materialObj)
 		effectiveLocation := lookupLocation(storageItemObj.PermanentLocationID, &locations)
 		return inventoryItem{
 			Title:             randomBookTitle,
@@ -43,7 +48,7 @@ func GenerateInventoryItems(filedef FileDef, outputParams OutputParams) {
 			HoldingsRecordID:  storageItemObj.HoldingsRecordID,
 			EffectiveLocation: effectiveLocation,
 			Status:            storageItemObj.Status,
-			MaterialType:      itemMaterialType{Name: "book"},
+			MaterialType:      itemMaterialType{ID: materialObj.ID, Name: materialObj.Name},
 		}
 	}
 	var items []interface{}

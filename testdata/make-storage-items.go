@@ -42,20 +42,23 @@ func randomCopyNumbers() []string {
 
 func GenerateStorageItems(filedef FileDef, outputParams OutputParams) {
 
+	holdingChnl := streamOutputLinearly(outputParams, "holdings-storage-holdings-1.json", "holdingsRecords")
 	locChnl := streamRandomItem(outputParams, "locations-1.json", "locations")
 	matChnl := streamRandomItem(outputParams, "material-types-1.json", "mtypes")
 
 	rand.Seed(time.Now().UnixNano())
-	makeStorageItem := func() storageItem {
+	makeStorageItem := func(oneHolding interface{}) storageItem {
 		randomLocation, _ := <-locChnl
 		randomMaterial, _ := <-matChnl
 		var locationObj location
 		var materialObj materialType
+		var holdingObj holding
 		mapstructure.Decode(randomLocation, &locationObj)
 		mapstructure.Decode(randomMaterial, &materialObj)
+		mapstructure.Decode(oneHolding, &holdingObj)
 		return storageItem{
 			ID:                  uuid.Must(uuid.NewV4()).String(),
-			HoldingsRecordID:    uuid.Must(uuid.NewV4()).String(),
+			HoldingsRecordID:    holdingObj.ID,
 			Barcode:             fake.DigitsN(16),
 			Status:              itemStatus{Name: "Available"},
 			Enumeration:         randomEnumeration(),
@@ -66,8 +69,8 @@ func GenerateStorageItems(filedef FileDef, outputParams OutputParams) {
 		}
 	}
 	var storageItems []interface{}
-	for i := 0; i < filedef.N; i++ {
-		oneStorageItem := makeStorageItem()
+	for oneHolding := range holdingChnl {
+		oneStorageItem := makeStorageItem(oneHolding)
 		storageItems = append(storageItems, oneStorageItem)
 	}
 

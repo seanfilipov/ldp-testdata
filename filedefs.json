@@ -28,17 +28,28 @@
   },
   {
     "module": "mod-inventory-storage",
+    "path": "/instance-types",
+    "objectKey": "instanceTypes",
+    "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/instance-type.html"
+  },
+  {
+    "module": "mod-inventory-storage",
+    "path": "/instance-storage/instances",
+    "objectKey": "instances",
+    "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/instance-storage.html",
+    "n": 10000
+  },
+  {
+    "module": "mod-inventory-storage",
     "path": "/holdings-storage/holdings",
     "objectKey": "holdingsRecords",
-    "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/holdings-storage.html",
-    "n": 3
+    "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/holdings-storage.html"
   },
   {
       "module": "mod-inventory-storage",
       "path": "/item-storage/items",
       "objectKey": "items",
-      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/item-storage.html",
-      "n": 10000
+      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/item-storage.html"
   },
   {
       "module": "mod-inventory",
