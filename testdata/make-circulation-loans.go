@@ -1,10 +1,8 @@
 package testdata
 
 import (
-	"io/ioutil"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -28,21 +26,6 @@ type circulationLoan struct {
 	Item     circulationLoanItem `json:"item"`
 }
 
-func countLoanStorageFiles(filepath string) (numMatching int) {
-	files, err := ioutil.ReadDir(filepath)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	for _, f := range files {
-		if strings.HasPrefix(f.Name(), "loan-storage-loans-") {
-			numMatching++
-			// fmt.Println(f.Name())
-		}
-	}
-	return numMatching
-}
-
 // Return inventoryItems.json as a map, indexed by item ID
 func makeItemsMap(filepath string) map[string]inventoryItem {
 	itemsMap := make(map[string]inventoryItem)
@@ -61,7 +44,7 @@ func makeItemsMap(filepath string) map[string]inventoryItem {
 func GenerateCirculationLoans(filedef FileDef, outputParams OutputParams) {
 	itemsPath := filepath.Join(outputParams.OutputDir, "inventory-items-1.json")
 	itemsMap := makeItemsMap(itemsPath)
-	numFiles := countLoanStorageFiles(outputParams.OutputDir)
+	numFiles := countFilesWithPrefix(outputParams.OutputDir, "loan-storage-loans-")
 	numThings := 0
 	for i := 1; i <= numFiles; i++ {
 		var circLoans []interface{}

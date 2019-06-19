@@ -38,6 +38,10 @@ func MapFileDefsToFunc(fileDefs []FileDef) (genFuncs []GenFunc) {
 		"/groups",
 		"/users",
 		"/locations",
+		"/material-types",
+		"/instance-types",
+		"/instance-storage/instances",
+		"/holdings-storage/holdings",
 		"/item-storage/items",
 		"/inventory/items",
 		"/loan-storage/loans",
@@ -53,6 +57,10 @@ func MapFileDefsToFunc(fileDefs []FileDef) (genFuncs []GenFunc) {
 			genFuncs = append(genFuncs, GenerateLocations)
 		case "/material-types":
 			genFuncs = append(genFuncs, GenerateMaterialTypes)
+		case "/instance-types":
+			genFuncs = append(genFuncs, GenerateInstanceTypes)
+		case "/instance-storage/instances":
+			genFuncs = append(genFuncs, GenerateInstances)
 		case "/holdings-storage/holdings":
 			genFuncs = append(genFuncs, GenerateHoldings)
 		case "/item-storage/items":
@@ -111,4 +119,18 @@ func ParseFileDefs(filepath, fileDefsOverrideFlag string, onlyUseOverride bool) 
 		}
 	}
 	return
+}
+
+func countFilesWithPrefix(filepath, prefix string) (numMatching int) {
+	files, err := ioutil.ReadDir(filepath)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	for _, f := range files {
+		if strings.HasPrefix(f.Name(), prefix) {
+			numMatching++
+			// fmt.Println(f.Name())
+		}
+	}
+	return numMatching
 }
