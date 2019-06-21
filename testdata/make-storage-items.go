@@ -63,7 +63,7 @@ func GenerateStorageItems(filedef FileDef, outputParams OutputParams) {
 			Status:              itemStatus{Name: "Available"},
 			Enumeration:         randomEnumeration(),
 			CopyNumbers:         randomCopyNumbers(),
-			ItemLevelCallNumber: randomCallNumber(),
+			ItemLevelCallNumber: holdingObj.CallNumber,
 			PermanentLocationID: locationObj.ID,
 			MaterialTypeID:      materialObj.ID,
 		}
