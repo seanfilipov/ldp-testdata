@@ -2,9 +2,6 @@ package testdata
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 
 	"github.com/icrowley/fake"
 	uuid "github.com/satori/go.uuid"
@@ -42,15 +39,7 @@ func GenerateLocations(filedef FileDef, outputParams OutputParams) {
 //
 
 func readLocations(params OutputParams, filename string) []location {
-	filepath := filepath.Join(params.OutputDir, filename)
-	jsonFile, errOpeningFile := os.Open(filepath)
-	if errOpeningFile != nil {
-		panic(errOpeningFile)
-	}
-	byteValue, err := ioutil.ReadAll(jsonFile)
-	if err != nil {
-		panic(err)
-	}
+	byteValue := readFile(params, filename)
 	var locationsFileObj locationsFile
 	json.Unmarshal(byteValue, &locationsFileObj)
 	return locationsFileObj.Locations

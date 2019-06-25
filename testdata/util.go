@@ -134,3 +134,16 @@ func countFilesWithPrefix(filepath, prefix string) (numMatching int) {
 	}
 	return numMatching
 }
+
+func readFile(params OutputParams, filename string) []byte {
+	filepath := filepath.Join(params.OutputDir, filename)
+	jsonFile, errOpeningFile := os.Open(filepath)
+	if errOpeningFile != nil {
+		panic(errOpeningFile)
+	}
+	byteValue, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		panic(err)
+	}
+	return byteValue
+}
