@@ -1,15 +1,16 @@
 package testdata
 
 import (
-	"path"
-	"runtime"
+	"encoding/json"
 
 	"github.com/mitchellh/mapstructure"
 )
 
-// This file is deprecated because mod-inventory is a business logic module
-// instead of the storage module (mod-loan-storage)
+// https://github.com/folio-org/mod-inventory/blob/master/ramls/item.json
 // https://s3.amazonaws.com/foliodocs/api/mod-inventory/inventory.html
+
+// FYI this path is for a business logic module (mod-inventory)
+// instead of the storage module (mod-inventory-storage)
 
 type itemMaterialType struct {
 	Name string `json:"name"`
@@ -25,24 +26,39 @@ type inventoryItem struct {
 	MaterialType      itemMaterialType `json:"materialType"`
 }
 
-func GenerateInventoryItems(filedef FileDef, outputParams OutputParams) {
-	bookChnl := make(chan string, 1)
-	_, nameOfThisFile, _, _ := runtime.Caller(0)
-	pkgDir := path.Dir(nameOfThisFile)
-	go streamRandomLine(pkgDir+"/book_titles.txt", bookChnl)
+type holdingsFile struct {
+	Holdings []holding `json:"holdingsRecords"`
+}
 
+func readHoldings(params OutputParams, filename string) []holding {
+	byteValue := readFile(params, filename)
+	var holdingsFileObj holdingsFile
+	json.Unmarshal(byteValue, &holdingsFileObj)
+	return holdingsFileObj.Holdings
+}
+func getHoldingsMap(params OutputParams, filename string) map[string]string {
+	holdingsMap := make(map[string]string)
+	holdings := readHoldings(params, filename)
+	for _, elmt := range holdings {
+		holdingsMap[elmt.ID] = elmt.ShelvingTitle
+	}
+	return holdingsMap
+}
+
+func GenerateInventoryItems(filedef FileDef, outputParams OutputParams) {
+
+	holdings := getHoldingsMap(outputParams, "holdings-storage-holdings-1.json")
 	locations := readLocations(outputParams, "locations-1.json")
 	matChnl := streamRandomItem(outputParams, "material-types-1.json", "mtypes")
-
 	makeItem := func(storageItemObj storageItem) inventoryItem {
 		// TODO: Should iterate over titles, not get a random one
 		randomMaterial, _ := <-matChnl
-		randomBookTitle, _ := <-bookChnl
 		var materialObj materialType
 		mapstructure.Decode(randomMaterial, &materialObj)
+
 		effectiveLocation := lookupLocation(storageItemObj.PermanentLocationID, &locations)
 		return inventoryItem{
-			Title:             randomBookTitle,
+			Title:             holdings[storageItemObj.HoldingsRecordID],
 			ID:                storageItemObj.ID,
 			Barcode:           storageItemObj.Barcode,
 			HoldingsRecordID:  storageItemObj.HoldingsRecordID,

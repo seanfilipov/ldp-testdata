@@ -21,6 +21,13 @@
       "n": 20
   },
   {
+      "module": "mod-inventory-storage",
+      "path": "/location-units/institutions",
+      "objectKey": "locinsts",
+      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/locationunit.html",
+      "n": 1
+  },
+  {
     "module": "mod-inventory-storage",
     "path": "/material-types",
     "objectKey": "mtypes",

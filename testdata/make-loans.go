@@ -11,6 +11,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+// https://github.com/folio-org/mod-circulation-storage/blob/master/ramls/loan.json
+
 var logger = logging.Logger
 
 type loanStatus struct {

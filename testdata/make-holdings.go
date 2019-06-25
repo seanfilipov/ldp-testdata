@@ -5,10 +5,14 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+// https://github.com/folio-org/mod-inventory-storage/blob/master/ramls/holdingsrecord.json
+
 type holding struct {
 	ID                  string `json:"id"`
 	InstanceID          string `json:"instanceId"`
 	PermanentLocationID string `json:"permanentLocationId"`
+	CallNumber          string `json:"callNumber"`
+	ShelvingTitle       string `json:"shelvingTitle"`
 }
 
 func GenerateHoldings(filedef FileDef, outputParams OutputParams) {
@@ -19,8 +23,10 @@ func GenerateHoldings(filedef FileDef, outputParams OutputParams) {
 		var instanceObj instance
 		mapstructure.Decode(oneInstance, &instanceObj)
 		return holding{
-			ID:         uuid.Must(uuid.NewV4()).String(),
-			InstanceID: instanceObj.ID,
+			ID:            uuid.Must(uuid.NewV4()).String(),
+			InstanceID:    instanceObj.ID,
+			CallNumber:    randomCallNumber(),
+			ShelvingTitle: instanceObj.Title,
 		}
 	}
 	var holdings []interface{}
