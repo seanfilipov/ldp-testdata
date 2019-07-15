@@ -47,9 +47,11 @@ Example: GenerateLoans()
 
 GenerateLoans() is more complex because of these requirements:
 
-a) the `loanDate` should increment so that the data is over a period of 1 year
-b) the `Status` of the loan may be checked in or checked out
-c) a maximum of 1 million loans must be supported, which requires that the data be split over multiple files
+1) The `loanDate` should increment so that the data is over a period of 1 year
+2) The `Status` of the loan may be checked in or checked out
+3) A maximum of 1 million loans must be supported, which requires that the data be split over multiple files
+
+The algorithm:
 
 - Loop over N, the number of transactions
 - Each iteration:
