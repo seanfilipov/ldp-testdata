@@ -46,6 +46,8 @@ All flags are optional
   -json string
     	JSON array to override the number of objects set filedefs.json
     	Example: '[{"path": "/loan-storage/loans", "n":50000}]'
+  -logLevel string
+    	The log level (Trace, Debug, Info, Warning, Error, Fatal and Panic) (default "Info")
   -only-json
     	Use with the -json flag to ignore filedefs.json
 ```

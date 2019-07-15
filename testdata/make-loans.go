@@ -3,7 +3,6 @@ package testdata
 import (
 	"math"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/folio-org/ldp-testdata/logging"
@@ -29,38 +28,38 @@ type loan struct {
 }
 
 type loanGenerator struct {
-	filedef      FileDef
-	outputParams OutputParams
-	ObjectKey    string
-	ItemChnl     chan interface{}
-	UserChnl     chan interface{}
-	CheckedOut   map[string]loan
-	EndDay       int
-	TxnPerDay    int
-	TxnPerFile   int
+	ItemChnl   chan interface{}
+	UserChnl   chan interface{}
+	CheckedOut map[string]loan
 }
 
-// Split loans into separate files
-// Spread out
-
-// Get a random item ID
-// If that item has already been checked out, check it back in
-// Otherwise, check it out
-func (lg loanGenerator) makeLoanTxn(date time.Time, itemID string) (retLoan loan) {
-	if itemID == "" {
-		randomItem, ok := <-lg.ItemChnl
-		if !ok {
-			logger.Error("Could not get item from channel")
-		}
-		var itemObj storageItem
-		mapstructure.Decode(randomItem, &itemObj)
-		itemID = itemObj.ID
-		if itemID == "" {
-			close(lg.ItemChnl)
-			logger.Errorf("Item received from channel has no ID field: %s", randomItem)
-			os.Exit(1)
-		}
+func (lg loanGenerator) randomItemID() (itemID string) {
+	randomItem, ok := <-lg.ItemChnl
+	if !ok {
+		logger.Error("Could not get item from channel")
 	}
+	var itemObj storageItem
+	mapstructure.Decode(randomItem, &itemObj)
+	itemID = itemObj.ID
+	if itemID == "" {
+		close(lg.ItemChnl)
+		logger.Errorf("Item received from channel has no ID field: %s", randomItem)
+		os.Exit(1)
+	}
+	return
+}
+func (lg loanGenerator) randomUserID() (userID string) {
+	randomUser, _ := <-lg.UserChnl
+	var userObj user
+	mapstructure.Decode(randomUser, &userObj)
+	return userObj.ID
+}
+
+// 1. Get a random item ID
+// 2. If that item has already been checked out, check it back in
+// 3. Otherwise, check it out
+func (lg loanGenerator) makeLoanTxn(date time.Time) (retLoan loan) {
+	itemID := lg.randomItemID()
 	if checkedOutLoan, ok := lg.CheckedOut[itemID]; ok {
 		retLoan = checkedOutLoan
 		retLoan.ID = uuid.Must(uuid.NewV4()).String()
@@ -68,12 +67,9 @@ func (lg loanGenerator) makeLoanTxn(date time.Time, itemID string) (retLoan loan
 		retLoan.Status.Name = "Closed"
 		delete(lg.CheckedOut, itemID)
 	} else {
-		randomUser, _ := <-lg.UserChnl
-		var userObj user
-		mapstructure.Decode(randomUser, &userObj)
 		l := loan{
 			ID:       uuid.Must(uuid.NewV4()).String(),
-			UserID:   userObj.ID,
+			UserID:   lg.randomUserID(),
 			ItemID:   itemID,
 			Action:   "checkedout",
 			Status:   loanStatus{Name: "Open"},
@@ -86,78 +82,44 @@ func (lg loanGenerator) makeLoanTxn(date time.Time, itemID string) (retLoan loan
 	return retLoan
 }
 
-// Write until the number of txnsPerFile is reached
-// OR the number of days is reached
-func (lg loanGenerator) makeLoans(startDay int) (day int, loans []interface{}) {
-	layout := time.RFC3339
-	jan1 := time.Date(2018, time.January, 1, 0, 0, 0, 0, time.UTC)
-	// Loop over the number of days
-	for day = startDay; day < lg.EndDay; day++ {
-		numCheckins := 0
-		date := jan1.Add(time.Hour * 24 * time.Duration(day)) // transform it into a date format
-		for itemID, loanObj := range lg.CheckedOut {
-			dueDate, _ := time.Parse(layout, loanObj.DueDate)
-			if dueDate == date {
-				loans = append(loans, lg.makeLoanTxn(date, itemID))
-				numCheckins++
-			}
-		}
-		numCheckouts := lg.TxnPerDay - numCheckins
-		// fmt.Printf("day:%d numCheckouts: %d, TxnPerDay: %d, numCheckins: %d\n", day, numCheckouts, lg.TxnPerDay, numCheckins)
-		// Loop over the number of txnsPerFile
-		for i := 0; i < numCheckouts; i++ {
-			loans = append(loans, lg.makeLoanTxn(date, ""))
-			if len(loans) >= lg.TxnPerFile {
-				return
-			}
-		}
-	}
-	return lg.EndDay, loans
-}
-
-func (lg loanGenerator) generateLoansSingleFile(startDay, callNum int) (int, int) {
-	reachedDay, loans := lg.makeLoans(startDay)
-	filename := fileNumStr(lg.filedef, callNum)
-	writeOutput(lg.outputParams, filename, lg.ObjectKey, loans)
-	totalWritten := strconv.Itoa(((callNum - 1) * lg.TxnPerFile) + len(loans))
-	logger.Debugf("Wrote %d transactions to %s (%s total)\n", len(loans), filename, totalWritten)
-	return reachedDay, len(loans)
-}
-func (lg loanGenerator) run() (counter, totalLoansMade int) {
-	runCount := 0
-	reachedDay := 0
-	for reachedDay != lg.EndDay {
-		var numLoans int
-		runCount++
-		reachedDay, numLoans = lg.generateLoansSingleFile(reachedDay, runCount)
-		logger.Debugf("Run #%d: reached day %d\n", runCount, reachedDay)
-		counter++
-		totalLoansMade += numLoans
-	}
-	return
-}
-
 func GenerateLoans(filedef FileDef, outputParams OutputParams) {
-	numDays := 365
-	txnPerFile := 100000
-	txnPerDay := int(math.Ceil(float64(filedef.N / numDays)))
-
-	numFilesNeeded := strconv.Itoa(int(math.Ceil(float64((txnPerDay * numDays) / txnPerFile))))
-	logger.Debug("Going to write ~" + numFilesNeeded + " files")
-	objKey := "loans"
 	lg := loanGenerator{
-		filedef,
-		outputParams,
-		objKey,
 		streamRandomItem(outputParams, "item-storage-items-1.json", "items"),
 		streamRandomItem(outputParams, "users-1.json", "users"),
 		make(map[string]loan),
-		numDays,
-		txnPerDay,
-		txnPerFile,
 	}
-	numFiles, totalLoansMade := lg.run()
-	filedef.N = totalLoansMade
-	filedef.NumFiles = numFiles
+
+	N := filedef.N
+	numFilesWritten := 0
+	numDays := 365 // approximate; because N cannot be evenly divided into 365 days, the remainder goes into overflow days
+	nInFile := 0
+	nInDay := 0
+	maxNInFile := 100000
+	maxNInDay := int(math.Ceil(float64(N / numDays)))
+	jan1 := time.Date(2018, time.January, 1, 0, 0, 0, 0, time.UTC)
+	today := 0                                                   // dayNum (0..365)
+	todayDate := jan1.Add(time.Hour * 24 * time.Duration(today)) // transform it into a date format
+
+	loans := make([]interface{}, 0)
+	for i := 0; i < N; i++ {
+		loans = append(loans, lg.makeLoanTxn(todayDate))
+		nInDay++
+		nInFile++
+		logger.Debugln("nInFile =", nInFile, todayDate)
+		if nInFile == maxNInFile || nInFile == N {
+			numFilesWritten++
+			filename := fileNumStr(filedef, numFilesWritten)
+			writeOutput(outputParams, filename, "loans", loans)
+			loans = make([]interface{}, 0)
+			nInFile = 0
+		}
+		if nInDay == maxNInDay {
+			today++
+			todayDate = jan1.Add(time.Hour * 24 * time.Duration(today)) // transform it into a date format
+			nInDay = 0
+		}
+	}
+
+	filedef.NumFiles = numFilesWritten
 	updateManifest(filedef, outputParams)
 }
