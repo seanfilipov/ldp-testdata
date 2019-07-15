@@ -1,6 +1,6 @@
-# Generation Algorithms
+# Data Generation Algorithms
 
-In the test data generated so far, I've found that the data generation algorithm can be classified as Simple, Dependent, or Unique.
+In the test data generated so far, I've found that a data generation algorithm can be classified as Simple, Dependent, or Unique.
 
 ## Class A: Simple
 
@@ -46,6 +46,7 @@ Output Example:
 Example: GenerateLoans()
 
 GenerateLoans() is more complex because of these requirements:
+
 a) the `loanDate` should increment so that the data is over a period of 1 year
 b) the `Status` of the loan may be checked in or checked out
 c) a maximum of 1 million loans must be supported, which requires that the data be split over multiple files
