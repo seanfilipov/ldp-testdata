@@ -2,7 +2,7 @@
 
 In the test data generated so far, I've found that a data generation algorithm can be classified as Simple, Dependent, or Unique.
 
-## Class A: Simple
+## Simple
 
 Examples: GenerateGroups(), GenerateLocations(), GenerateMaterialTypes()
 
@@ -20,7 +20,7 @@ Output Example:
 }
 ```
 
-## Class B: Dependent
+## Dependent
 
 Examples: GenerateUsers(), GenerateInstances(), GenerateHoldings()
 
@@ -41,7 +41,7 @@ Output Example:
 ```
 
 
-## Class C: Unique
+## Unique
 
 Example: GenerateLoans()
 
