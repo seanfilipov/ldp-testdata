@@ -14,6 +14,7 @@ type FileDef struct {
 	NumFiles  int    `json:"numFiles"`    // the number of files a part of this output
 	Doc       string `json:"doc"`         // URL to the API documentation
 	N         int    `json:"n,omitempty"` // Number of objects
+	NumDays   int    `json:"numDays,omitempty"`
 }
 
 func toInterface(originals []FileDef) []interface{} {

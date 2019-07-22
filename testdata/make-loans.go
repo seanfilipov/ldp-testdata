@@ -91,7 +91,7 @@ func GenerateLoans(filedef FileDef, outputParams OutputParams) {
 
 	N := filedef.N
 	numFilesWritten := 0
-	numDays := 365 // approximate; because N cannot be evenly divided into 365 days, the remainder goes into overflow days
+	numDays := filedef.NumDays // approximate; because N might not be evenly divided into 365 days, the remainder goes into overflow days
 	nInFile := 0
 	nInDay := 0
 	maxNInFile := 100000
