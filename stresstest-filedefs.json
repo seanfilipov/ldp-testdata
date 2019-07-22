@@ -4,21 +4,21 @@
       "path": "/groups",
       "objectKey": "usergroups",
       "doc": "https://s3.amazonaws.com/foliodocs/api/mod-users/groups.html",
-      "n": 12
+      "n": 100
   },
   {
       "module": "mod-users",
       "path": "/users",
       "objectKey": "users",
       "doc": "https://s3.amazonaws.com/foliodocs/api/mod-users/users.html",
-      "n": 30000
+      "n": 100000
   },
   {
       "module": "mod-inventory-storage",
       "path": "/locations",
       "objectKey": "locations",
       "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/location.html",
-      "n": 20
+      "n": 100
   },
   {
       "module": "mod-inventory-storage",
@@ -69,14 +69,13 @@
       "path": "/loan-storage/loans",
       "objectKey": "loans",
       "doc": "https://s3.amazonaws.com/foliodocs/api/mod-circulation-storage/loan-storage.html",
-      "n": 10000,
-      "numDays": 365
+      "n": 20000000,
+      "numDays": 1825
   },
   {
       "module": "mod-circulation",
       "path": "/circulation/loans",
       "objectKey": "loans",
-      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-circulation/circulation.html",
-      "n": 10000
+      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-circulation/circulation.html"
   }
 ]
