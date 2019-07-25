@@ -42,16 +42,22 @@ func main() {
 	atSupportedRoutes := false
 	for scanner.Scan() {
 		text := scanner.Text()
+		// 1) Find the header
 		if text == "Supported Routes" {
 			atSupportedRoutes = true
+			// 2) Find the first bullet
 		} else if atSupportedRoutes && strings.HasPrefix(text, "- ") {
+			// 3) Scan past all the bullets
 			for strings.HasPrefix(scanner.Text(), "- ") {
 				scanner.Scan()
 			}
+			// 4) Generate new bullets
 			for _, fileDef := range fileDefs {
 				newText := fmt.Sprintf("- [%s](%s)", fileDef.Path, fileDef.Doc)
 				lines = append(lines, newText)
 			}
+			// 5) End scanning this section
+			lines = append(lines, "")
 			atSupportedRoutes = false
 			continue
 		}

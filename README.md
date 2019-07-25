@@ -65,6 +65,19 @@ Supported Routes
 - [/groups](https://s3.amazonaws.com/foliodocs/api/mod-users/groups.html)
 - [/users](https://s3.amazonaws.com/foliodocs/api/mod-users/users.html)
 - [/locations](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/location.html)
+- [/location-units/institutions](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/locationunit.html)
+- [/service-points](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/service-point.html)
 - [/material-types](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/material-type.html)
+- [/instance-types](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/instance-type.html)
+- [/instance-storage/instances](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/instance-storage.html)
+- [/holdings-storage/holdings](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/holdings-storage.html)
 - [/item-storage/items](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/item-storage.html)
+- [/inventory/items](https://s3.amazonaws.com/foliodocs/api/mod-inventory/inventory.html)
 - [/loan-storage/loans](https://s3.amazonaws.com/foliodocs/api/mod-circulation-storage/loan-storage.html)
+- [/circulation/loans](https://s3.amazonaws.com/foliodocs/api/mod-circulation/circulation.html)
+
+Additional Documentation
+--------
+
+- [Algorithms used to generate test data](https://github.com/folio-org/ldp-testdata/blob/master/doc/algorithms.md)
+- [Field descriptions for filedefs.json](https://github.com/folio-org/ldp-testdata/blob/master/doc/filedefs.md)
