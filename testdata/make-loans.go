@@ -14,23 +14,38 @@ import (
 
 var logger = logging.Logger
 
+type metadata struct {
+	CreatedDate     string `json:"createdDate"`
+	CreatedByUserID string `json:"createdByUserId"`
+}
 type loanStatus struct {
 	Name string `json:"name"`
 }
 type loan struct {
-	ID       string     `json:"id"`
-	UserID   string     `json:"userId"`
-	ItemID   string     `json:"itemId"`
-	Action   string     `json:"action"`
-	Status   loanStatus `json:"status"`
-	LoanDate string     `json:"loanDate"`
-	DueDate  string     `json:"dueDate"`
+	ID                     string     `json:"id"`
+	UserID                 string     `json:"userId"`
+	ProxyUserID            string     `json:"proxyUserId,omitempty"`
+	ItemID                 string     `json:"itemId"`
+	Status                 loanStatus `json:"status"`
+	LoanDate               string     `json:"loanDate"`
+	DueDate                string     `json:"dueDate"`
+	ReturnDate             string     `json:"returnDate,omitempty"`
+	SystemReturnDate       string     `json:"systemReturnDate,omitempty"`
+	Action                 string     `json:"action"`
+	ActionComment          string     `json:"actionComment,omitempty"`
+	ItemStatus             string     `json:"itemStatus"`
+	RenewalCount           int        `json:"renewalCount"`
+	LoanPolicyID           string     `json:"loanPolicyId"`
+	CheckoutServicePointID string     `json:"checkoutServicePointId,omitempty"`
+	CheckinServicePointID  string     `json:"checkinServicePointId,omitempty"`
+	Metadata               metadata   `json:"metadata"`
 }
 
 type loanGenerator struct {
-	ItemChnl   chan interface{}
-	UserChnl   chan interface{}
-	CheckedOut map[string]loan
+	ItemChnl         chan interface{}
+	UserChnl         chan interface{}
+	ServicePointChnl chan interface{}
+	CheckedOut       map[string]loan
 }
 
 func (lg loanGenerator) randomItemID() (itemID string) {
@@ -54,6 +69,36 @@ func (lg loanGenerator) randomUserID() (userID string) {
 	mapstructure.Decode(randomUser, &userObj)
 	return userObj.ID
 }
+func (lg loanGenerator) randomServicePoint() (servicePointID string) {
+	randomSP, _ := <-lg.ServicePointChnl
+	var spObj servicePoint
+	mapstructure.Decode(randomSP, &spObj)
+	return spObj.ID
+}
+func (lg loanGenerator) getProxyUserID() (proxyUserID string) {
+	if random(0, 9) == 0 {
+		return lg.randomUserID()
+	}
+	return
+}
+func getActionComment() (actionComment string) {
+	val := random(0, 19)
+	if val == 0 {
+		return "Page torn"
+	} else if val == 1 {
+		return "Damaged"
+	}
+	return
+}
+func getRenewalCount() (renewalCount int) {
+	val := random(0, 19)
+	if val == 0 {
+		return 1
+	} else if val == 1 {
+		return 2
+	}
+	return 0
+}
 
 // 1. Get a random item ID
 // 2. If that item has already been checked out, check it back in
@@ -65,16 +110,34 @@ func (lg loanGenerator) makeLoanTxn(date time.Time) (retLoan loan) {
 		retLoan.ID = uuid.Must(uuid.NewV4()).String()
 		retLoan.Action = "checkedin"
 		retLoan.Status.Name = "Closed"
+		retLoan.ReturnDate = date.Format(time.RFC3339)
+		retLoan.SystemReturnDate = date.Format(time.RFC3339)
+		retLoan.ActionComment = getActionComment()
+		retLoan.ItemStatus = "Available"
+		retLoan.RenewalCount = getRenewalCount()
+		retLoan.CheckoutServicePointID = lg.randomServicePoint()
+		retLoan.Metadata = metadata{
+			CreatedDate:     date.Format(time.RFC3339),
+			CreatedByUserID: lg.randomUserID(),
+		}
 		delete(lg.CheckedOut, itemID)
 	} else {
 		l := loan{
-			ID:       uuid.Must(uuid.NewV4()).String(),
-			UserID:   lg.randomUserID(),
-			ItemID:   itemID,
-			Action:   "checkedout",
-			Status:   loanStatus{Name: "Open"},
-			LoanDate: date.Format(time.RFC3339),
-			DueDate:  date.Add(time.Hour * 24 * 7 * 2).Format(time.RFC3339), // loan duration: 14 days
+			ID:                     uuid.Must(uuid.NewV4()).String(),
+			UserID:                 lg.randomUserID(),
+			ProxyUserID:            lg.getProxyUserID(),
+			ItemID:                 itemID,
+			Action:                 "checkedout",
+			Status:                 loanStatus{Name: "Open"},
+			ItemStatus:             "Checked out",
+			LoanDate:               date.Format(time.RFC3339),
+			DueDate:                date.Add(time.Hour * 24 * 7 * 2).Format(time.RFC3339), // loan duration: 14 days
+			LoanPolicyID:           uuid.Must(uuid.NewV4()).String(),
+			CheckoutServicePointID: lg.randomServicePoint(),
+			Metadata: metadata{
+				CreatedDate:     date.Format(time.RFC3339),
+				CreatedByUserID: lg.randomUserID(),
+			},
 		}
 		lg.CheckedOut[itemID] = l
 		retLoan = l
@@ -86,6 +149,7 @@ func GenerateLoans(filedef FileDef, outputParams OutputParams) {
 	lg := loanGenerator{
 		streamRandomItem(outputParams, "item-storage-items-1.json", "items"),
 		streamRandomItem(outputParams, "users-1.json", "users"),
+		streamRandomItem(outputParams, "service-points-1.json", "servicepoints"),
 		make(map[string]loan),
 	}
 
