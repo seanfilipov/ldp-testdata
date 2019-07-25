@@ -28,6 +28,13 @@
       "n": 1
   },
   {
+      "module": "mod-inventory-storage",
+      "path": "/service-points",
+      "objectKey": "servicepoints",
+      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/service-point.html",
+      "n": 3
+  },
+  {
     "module": "mod-inventory-storage",
     "path": "/material-types",
     "objectKey": "mtypes",
