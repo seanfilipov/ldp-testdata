@@ -50,7 +50,7 @@ For the following filedefs, `n` is irregular:
 
 | Path                       | n behavior                                     |
 |----------------------------|------------------------------------------------|
-| /loan-storage/loans        | n is approximate¹                              |
+| /service-points            | n = 3                                          |
 | /instance-types            | n = 10                                         |
 | /holdings-storage/holdings | Ignored. Same n as /instance-storage/instances |
 | /item-storage/items        | Ignored. Same n as /instance-storage/instances |
@@ -58,3 +58,7 @@ For the following filedefs, `n` is irregular:
 | /circulation/loans         | Ignored. Same n as /loan-storage/loans         |
 
 ¹ The current simulation for loan objects over 1 year involves some randomness, which makes meeting an exact number difficult.
+
+### numDays
+
+Currently only used for the `/loan-storage/loans` filedef. This data is generated over time, `numDays`. To generate data for loan transactions over the course of 5 years (`5*365 = 1825 days`), use `"numDays": 1825` 
