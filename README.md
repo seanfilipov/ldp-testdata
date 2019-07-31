@@ -11,7 +11,7 @@ more information.
 Prerequisites
 -------------------
 
-* [Go](https://golang.org) 1.10 or later
+* [Go](https://golang.org) 1.12 or later
 
 Overview
 --------
