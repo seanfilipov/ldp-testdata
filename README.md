@@ -43,6 +43,8 @@ All flags are optional
     	The directory to store output
   -fileDefs string
     	The filepath of the JSON file definitions (default "filedefs.json")
+  -indent
+    	Whether to pretty-print the output (default true)
   -json string
     	JSON array to override the number of objects set filedefs.json
     	Example: '[{"path": "/loan-storage/loans", "n":50000}]'
