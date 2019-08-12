@@ -16,6 +16,7 @@ func main() {
 	}
 	// openBrowser := flag.Bool("openBrowser", true, "Whether to open a web browser to the UI")
 	dirFlag := flag.String("dir", "", "The directory to store output")
+	indentFlag := flag.Bool("indent", true, "Whether to pretty-print the output")
 	logLevelFlag := flag.String("logLevel", "Info", "The log level (Trace, Debug, Info, Warning, Error, Fatal and Panic)")
 	fileDefsFlag := flag.String("fileDefs", "filedefs.json", "The filepath of the JSON file definitions")
 	dataFmtFlag := flag.String("dataFormat", "folioJSON", `The outputted data format [folioJSON|jsonArray]`)
@@ -40,7 +41,7 @@ Example: '[{"path": "/loan-storage/loans", "n":50000}]'`)
 		Output: testdata.OutputParams{
 			OutputDir:  testdata.MakeTimestampedDir(*dirFlag),
 			DataFormat: testdata.ParseDataFmtFlag(*dataFmtFlag),
-			Indent:     true,
+			Indent:     *indentFlag,
 		},
 	}
 	testdata.MakeAll(funcs, p)
