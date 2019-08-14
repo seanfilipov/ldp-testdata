@@ -39,6 +39,16 @@ func randomEnumeration() string {
 func randomCopyNumbers() []string {
 	return []string{strconv.Itoa(random(1, 5))}
 }
+func itemAvailibity() string {
+	num := random(0, 9)
+	if num < 5 {
+		return "Available"
+	} else if num >= 5 && num < 9 {
+		return "Checked out"
+	} else {
+		return "In transit"
+	}
+}
 
 func GenerateStorageItems(filedef FileDef, outputParams OutputParams) {
 
@@ -60,7 +70,7 @@ func GenerateStorageItems(filedef FileDef, outputParams OutputParams) {
 			ID:                  uuid.Must(uuid.NewV4()).String(),
 			HoldingsRecordID:    holdingObj.ID,
 			Barcode:             fake.DigitsN(16),
-			Status:              itemStatus{Name: "Available"},
+			Status:              itemStatus{Name: itemAvailibity()},
 			Enumeration:         randomEnumeration(),
 			CopyNumbers:         randomCopyNumbers(),
 			ItemLevelCallNumber: holdingObj.CallNumber,
