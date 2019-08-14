@@ -35,6 +35,7 @@ func MakeTimestampedDir(dirFlag string) string {
 // MapFileDefsToFunc checks that each 'path' is valid
 func MapFileDefsToFunc(fileDefs []FileDef) (genFuncs []GenFunc) {
 	validPaths := []string{
+		"/addresstypes",
 		"/groups",
 		"/users",
 		"/locations",
@@ -51,6 +52,8 @@ func MapFileDefsToFunc(fileDefs []FileDef) (genFuncs []GenFunc) {
 
 	for _, def := range fileDefs {
 		switch def.Path {
+		case "/addresstypes":
+			genFuncs = append(genFuncs, GenerateAddressTypes)
 		case "/groups":
 			genFuncs = append(genFuncs, GenerateGroups)
 		case "/users":

@@ -1,6 +1,13 @@
 [
   {
       "module": "mod-users",
+      "path": "/addresstypes",
+      "objectKey": "addressTypes",
+      "doc": "https://s3.amazonaws.com/foliodocs/api/mod-users/addressTypes.html",
+      "n": 2
+  },
+  {
+      "module": "mod-users",
       "path": "/groups",
       "objectKey": "usergroups",
       "doc": "https://s3.amazonaws.com/foliodocs/api/mod-users/groups.html",

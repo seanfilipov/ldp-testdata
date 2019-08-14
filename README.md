@@ -64,6 +64,7 @@ use the `-json` flag to override the number of objects set in filedefs.json
 Supported Routes
 --------
 
+- [/addresstypes](https://s3.amazonaws.com/foliodocs/api/mod-users/addressTypes.html)
 - [/groups](https://s3.amazonaws.com/foliodocs/api/mod-users/groups.html)
 - [/users](https://s3.amazonaws.com/foliodocs/api/mod-users/users.html)
 - [/locations](https://s3.amazonaws.com/foliodocs/api/mod-inventory-storage/location.html)
