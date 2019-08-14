@@ -50,6 +50,7 @@ For the following filedefs, `n` is irregular:
 
 | Path                       | n behavior                                     |
 |----------------------------|------------------------------------------------|
+| /addresstypes              | n = 2                                          |
 | /service-points            | n = 3                                          |
 | /instance-types            | n = 10                                         |
 | /holdings-storage/holdings | Ignored. Same n as /instance-storage/instances |
